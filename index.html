@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Warehouse Pro - Login</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  *{box-sizing:border-box;font-family:Inter,Arial,sans-serif} body{margin:0;background:#eef2f7}
+  .login-bg{min-height:100vh;background:linear-gradient(135deg,#052e16,#16a34a 50%,#0d9488);display:flex;align-items:center;justify-content:center;padding:16px}
+  .login-card{background:#fff;width:100%;max-width:400px;border-radius:20px;padding:28px;box-shadow:0 20px 50px rgba(0,0,0,.3)}
+  .logo{width:56px;height:56px;border-radius:14px;background:#16a34a;color:#fff;display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:900}
+  label{font-size:12px;font-weight:700;color:#334155;display:block;margin:12px 0 6px}
+  input,select{width:100%;padding:12px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:14px}
+  .btn{width:100%;padding:13px;border:0;border-radius:10px;font-weight:800;cursor:pointer}
+  .btn-login{background:#16a34a;color:#fff;margin-top:18px}
+  .err-box{background:#fef2f2;color:#991b1b;border:1px solid #fecaca;padding:10px;border-radius:10px;font-size:13px;display:none;margin-top:12px}
+  .topbar{background:#fff;border-bottom:1px solid #e2e8f0;padding:12px 18px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:10}
+  .wrap{padding:16px;max-width:1400px;margin:auto}
+  .cards{display:grid;grid-template-columns:repeat(4,1fr);gap:12px} .card{background:#fff;border-radius:16px;padding:16px;box-shadow:0 2px 8px rgba(0,0,0,.05)} .card b{font-size:28px;display:block}
+  .panel{background:#fff;border-radius:16px;padding:16px;margin-top:14px}
+  .row{display:flex;gap:10px;flex-wrap:wrap;align-items:end} .col{flex:1;min-width:150px}
+  .btn-in{background:#16a34a;color:#fff;padding:11px 16px;border:0;border-radius:10px;font-weight:700;cursor:pointer}
+  .btn-out{background:#dc2626;color:#fff;padding:11px 16px;border:0;border-radius:10px;font-weight:700;cursor:pointer}
+  .btn-page{padding:9px 14px;border:0;border-radius:8px;background:#0f172a;color:#fff;font-weight:700;cursor:pointer}
+  .btn-page:disabled{opacity:.4}
+  table{width:100%;border-collapse:collapse;font-size:12.5px} th{background:#0f172a;color:#fff;padding:10px;text-align:left} td{padding:9px 10px;border-bottom:1px solid #f1f5f9}
+  .badge{padding:4px 9px;border-radius:20px;font-size:11px;font-weight:700} .kosong{background:#fee2e2;color:#991b1b} .terisi{background:#dcfce7;color:#166534}
+  @media(max-width:800px){.cards{grid-template-columns:repeat(2,1fr)}}
+</style>
+</head>
+<body>
+<div id="loginPage" class="login-bg">
+  <div class="login-card">
+    <div class="logo">W</div>
+    <h1 style="margin:12px 0 4px">Warehouse Pro</h1>
+    <p style="color:#64748b;font-size:13px;margin:0 0 8px">Silakan login dengan akun Anda.<br>Hubungi admin jika belum punya akun.</p>
+    <label>USERNAME</label><input id="lgUser" placeholder="Masukkan username" autocomplete="username">
+    <label>PASSWORD</label><input id="lgPass" type="password" placeholder="Masukkan password" autocomplete="current-password" onkeydown="if(event.key==='Enter') doLogin()">
+    <div id="lgErr" class="err-box">Username atau password salah</div>
+    <button class="btn btn-login" onclick="doLogin()">Masuk Dashboard</button>
+    <p style="font-size:11px;color:#94a3b8;text-align:center;margin-top:14px">Data tersimpan di server pusat • Update real-time • Total 3.004 Rak</p>
+  </div>
+</div>
+<div id="dashPage" style="display:none">
+  <div class="topbar">
+    <div><b>WAREHOUSE PRO</b><br><span style="font-size:12px;color:#64748b">3.004 Slot Rak • Update Real-time</span></div>
+    <div style="display:flex;gap:8px;align-items:center"><span id="userPill" style="padding:6px 10px;border-radius:20px;background:#dcfce7;font-size:12px;font-weight:700"></span><button onclick="doLogout()" style="padding:9px 14px;border-radius:8px;border:0;background:#fee2e2;color:#991b1b;cursor:pointer;font-weight:700">Logout</button></div>
+  </div>
+  <div class="wrap">
+    <div class="cards">
+      <div class="card"><small>Total Rak - Semua</small><b id="cTotalAll">3.004</b></div>
+      <div class="card"><small>Rak Terisi</small><b id="cTerisi" style="color:#16a34a">0</b></div>
+      <div class="card"><small>Rak Kosong</small><b id="cKosong" style="color:#ea580c">3.004</b></div>
+      <div class="card"><small>Total Qty</small><b id="cQty" style="color:#2563eb">0</b></div>
+    </div>
+    <div class="panel" style="display:flex;gap:16px;flex-wrap:wrap;font-size:13px">
+      <span><b>Rack Dipilih:</b> <span id="infoRack">-</span></span>
+      <span><b>Total di Rack Ini:</b> <span id="infoTotal">0</span></span>
+      <span><b>Terisi:</b> <span id="infoTerisi">0</span></span>
+      <span><b>Kosong:</b> <span id="infoKosong">0</span></span>
+      <span><b>Qty:</b> <span id="infoQty">0</span></span>
+      <span style="margin-left:auto;color:#64748b" id="clock"></span>
+      <span id="liveDot" style="color:#16a34a;font-weight:700">● LIVE</span>
+    </div>
+    <div class="panel">
+      <h3 style="margin:0 0 12px">Form IN / OUT - Auto Fill Master</h3>
+      <div class="row">
+        <div class="col"><label>AREA</label><select id="fArea"></select></div>
+        <div class="col"><label>RACK</label><select id="fRack"></select></div>
+        <div class="col"><label>KODE RAK</label><select id="fCode"></select></div>
+        <div class="col"><label>QTY</label><input id="fQty" type="number" value="1" min="1"></div>
+      </div>
+      <div class="row" style="margin-top:12px">
+        <div class="col"><label>ITEM CODE (ketik 3 huruf)</label><input id="fItem" list="itemList" placeholder="PLA-000001 atau RAW-000210"><datalist id="itemList"></datalist></div>
+        <div class="col"><label>ITEM DESCRIPTION</label><input id="fDesc" readonly></div>
+        <div class="col"><label>UOM</label><input id="fUom" readonly></div>
+        <div class="col"><label>ITEM CODE LAMA</label><input id="fLama" readonly></div>
+      </div>
+      <div class="row" style="margin-top:14px">
+        <button class="btn-in" id="btnIn" onclick="doIn()">+ STOCK IN</button>
+        <button class="btn-out" id="btnOut" onclick="doOut()">- STOCK OUT</button>
+        <button onclick="doExport()" style="padding:11px 16px;border:0;border-radius:10px;background:#0f172a;color:#fff;font-weight:700;cursor:pointer">Export CSV</button>
+        <span id="msg"></span>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="row">
+        <div class="col"><label>Filter Area</label><select id="fltArea"><option value="">Semua Area</option></select></div>
+        <div class="col"><label>Filter Rack</label><select id="fltRack"><option value="">Semua Rack</option></select></div>
+        <div class="col"><label>Filter Status</label><select id="fltStatus"><option value="">Semua</option><option value="terisi">Terisi Saja</option><option value="kosong">Kosong Saja</option></select></div>
+        <div class="col"><label>Cari Kode / Item</label><input id="fltSearch" placeholder="Cari A0111..."></div>
+      </div>
+      <div style="overflow:auto;max-height:520px;margin-top:12px"><table><thead><tr><th>Area</th><th>Rack</th><th>Kode Rak</th><th>Rak Kosong</th><th>Rak Terisi</th><th>Jumlah Qty</th><th>ITEM CODE</th><th>ITEM DESCRIPTION</th><th>UOM</th><th>ITEM CODE LAMA</th><th>Last Update</th><th>Di Update Oleh</th></tr></thead><tbody id="tbody"></tbody></table></div>
+      <div style="display:flex;gap:8px;align-items:center;justify-content:center;margin-top:12px">
+        <button class="btn-page" id="btnPrev" onclick="changePage(-1)">◀ Prev</button>
+        <span id="footCount" style="font-size:12px;color:#888"></span>
+        <button class="btn-page" id="btnNext" onclick="changePage(1)">Next ▶</button>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+const SUPABASE_URL = "https://scubdphdxcwwhtimchoq.supabase.co";
+const SUPABASE_KEY = "sb_publishable_ep7431Nv5EwHUpxCswGlXw_Hb2IhIA2";
+const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+let CURRENT_USER = null;
+let RACK_DATA = {};
+let ITEM_MASTER = [];
+let CURRENT_PAGE = 1;
+const PAGE_SIZE = 50;
+let reloadTimer = null;
+
+async function doLogin(){
+  let username = document.getElementById("lgUser").value.trim().toLowerCase();
+  let password = document.getElementById("lgPass").value;
+  if(!username || !password) return showLoginErr("Isi username dan password");
+  const { data, error } = await supabaseClient.rpc("login_user", { p_username: username, p_password: password });
+  if(error || !data || data.length===0) return showLoginErr("Username atau password salah");
+  CURRENT_USER = data[0];
+  document.getElementById("loginPage").style.display="none";
+  document.getElementById("dashPage").style.display="block";
+  document.getElementById("userPill").textContent = CURRENT_USER.username + " • " + CURRENT_USER.role;
+  let canInOut = CURRENT_USER.role !== "VIEWER";
+  document.getElementById("btnIn").disabled = !canInOut;
+  document.getElementById("btnOut").disabled = !canInOut;
+  if(!canInOut) document.getElementById("msg").textContent = "Akun Viewer hanya bisa melihat";
+  document.getElementById("msg").textContent = "Loading data...";
+  await loadAllData();
+  document.getElementById("msg").textContent = "";
+  subscribeRealtime();
+}
+function showLoginErr(msg){ let e=document.getElementById("lgErr"); e.textContent=msg; e.style.display="block"; }
+function doLogout(){ CURRENT_USER=null; document.getElementById("dashPage").style.display="none"; document.getElementById("loginPage").style.display="flex"; document.getElementById("lgPass").value=""; }
+
+async function loadAllData(){
+  ITEM_MASTER = [];
+  let fromM = 0;
+  while(true){
+    let { data: master } = await supabaseClient.from("item_master").select("*").range(fromM, fromM + 999);
+    if(!master || master.length === 0) break;
+    ITEM_MASTER = ITEM_MASTER.concat(master);
+    if(master.length < 1000) break;
+    fromM += 1000;
+  }
+  let allRacks = [];
+  let fromR = 0;
+  while(true){
+    let { data: racks } = await supabaseClient.from("racks").select("*").order("code").range(fromR, fromR + 999);
+    if(!racks || racks.length === 0) break;
+    allRacks = allRacks.concat(racks);
+    if(racks.length < 1000) break;
+    fromR += 1000;
+  }
+  RACK_DATA = {};
+  (allRacks||[]).forEach(r=>{
+    if(!RACK_DATA[r.area]) RACK_DATA[r.area]={};
+    if(!RACK_DATA[r.area][r.rack]) RACK_DATA[r.area][r.rack]=[];
+    RACK_DATA[r.area][r.rack].push(r);
+  });
+  console.log("Total rak dari server:", getAllSlots().length);
+  initDropdowns();
+  render();
+}
+function subscribeRealtime(){
+  supabaseClient.channel("racks-live")
+    .on("postgres_changes", { event:"*", schema:"public", table:"racks" }, ()=>{
+      document.getElementById("liveDot").textContent = "● LIVE - Ada Update Baru " + new Date().toLocaleTimeString("id-ID");
+      clearTimeout(reloadTimer);
+      reloadTimer = setTimeout(()=> loadAllData(), 1500);
+    })
+    .subscribe();
+}
+async function doIn(){
+  if(CURRENT_USER.role==="VIEWER") return alert("Viewer tidak bisa IN / OUT");
+  let area=document.getElementById("fArea").value, rack=document.getElementById("fRack").value, code=document.getElementById("fCode").value, qty=parseInt(document.getElementById("fQty").value||"0"), itemCode=document.getElementById("fItem").value;
+  let item = ITEM_MASTER.find(x=>x.item_code===itemCode) || ITEM_MASTER.find(x=>x.item_code_lama===itemCode);
+  if(!item) return alert("Item tidak ada di Master");
+  let { data: slot } = await supabaseClient.from("racks").select("*").eq("code", code).single();
+  if(slot.jumlah_qty>0 && slot.item_code!==item.item_code) return alert("Rak sudah terisi item lain");
+  await supabaseClient.from("racks").update({ jumlah_qty: slot.jumlah_qty + qty, item_code: item.item_code, item_description: item.item_description, uom: item.uom, item_code_lama: item.item_code_lama, rak_terisi: true, rak_kosong: false, last_update: new Date().toISOString(), updated_by: CURRENT_USER.username }).eq("code", code);
+  await supabaseClient.from("transactions").insert({ area, rack, code, item_code: item.item_code, qty, type:"IN", username: CURRENT_USER.username });
+  document.getElementById("msg").textContent = "Berhasil IN " + qty + " ke " + code;
+}
+async function doOut(){
+  if(CURRENT_USER.role==="VIEWER") return alert("Viewer tidak bisa IN / OUT");
+  let code=document.getElementById("fCode").value, qty=parseInt(document.getElementById("fQty").value||"0");
+  let { data: slot } = await supabaseClient.from("racks").select("*").eq("code", code).single();
+  if(slot.jumlah_qty < qty) return alert("Stok hanya " + slot.jumlah_qty);
+  let newQty = slot.jumlah_qty - qty;
+  await supabaseClient.from("racks").update({ jumlah_qty: newQty, rak_terisi: newQty>0, rak_kosong: newQty===0, item_code: newQty===0?"":slot.item_code, item_description: newQty===0?"":slot.item_description, uom: newQty===0?"":slot.uom, item_code_lama: newQty===0?"":slot.item_code_lama, last_update: new Date().toISOString(), updated_by: CURRENT_USER.username }).eq("code", code);
+  await supabaseClient.from("transactions").insert({ area:slot.area, rack:slot.rack, code, item_code: slot.item_code, qty, type:"OUT", username: CURRENT_USER.username });
+  document.getElementById("msg").textContent = "Berhasil OUT " + qty + " dari " + code;
+}
+function getAllSlots(){ let all=[]; for(let a in RACK_DATA) for(let r in RACK_DATA[a]) RACK_DATA[a][r].forEach(x=>all.push(x)); return all; }
+function getAreas(){return Object.keys(RACK_DATA)} function getRacks(a){return Object.keys(RACK_DATA[a]||{})} function getCodes(a,r){return RACK_DATA[a]?.[r]||[]}
+function initDropdowns(){
+  let fArea=document.getElementById("fArea"), fRack=document.getElementById("fRack"), fltArea=document.getElementById("fltArea"), fltRack=document.getElementById("fltRack");
+  let curArea = fArea.value;
+  fArea.innerHTML=""; fltArea.innerHTML='<option value="">Semua Area</option>';
+  getAreas().forEach(a=>{ fArea.innerHTML+=`<option>${a}</option>`; fltArea.innerHTML+=`<option>${a}</option>`; });
+  if(curArea && RACK_DATA[curArea]) fArea.value = curArea;
+  updateRackDropdown();
+  fArea.onchange=()=>{ updateRackDropdown(); onRackChange(); };
+  fRack.onchange=onRackChange;
+  fltArea.onchange=()=>{ updateFilterRack(); CURRENT_PAGE=1; render(); };
+  fltRack.onchange=()=>{ CURRENT_PAGE=1; render(); };
+  document.getElementById("fltStatus").onchange=()=>{ CURRENT_PAGE=1; render(); };
+  document.getElementById("fltSearch").oninput=()=>{ CURRENT_PAGE=1; render(); };
+  let itemInput = document.getElementById("fItem");
+  itemInput.oninput=(e)=>{
+    let v=e.target.value.trim();
+    let dl=document.getElementById("itemList");
+    if(v.length < 3){ dl.innerHTML=""; document.getElementById("fDesc").value=""; document.getElementById("fUom").value=""; document.getElementById("fLama").value=""; return; }
+    let low = v.toLowerCase();
+    let found = ITEM_MASTER.filter(x=> (x.item_code && x.item_code.toLowerCase().includes(low)) || (x.item_description && x.item_description.toLowerCase().includes(low)) || (x.item_code_lama && x.item_code_lama.toLowerCase().includes(low))).slice(0,50);
+    dl.innerHTML = found.map(i=> `<option value="${i.item_code}">${i.item_description} | ${i.uom}</option>`).join("");
+    let it=ITEM_MASTER.find(x=>x.item_code===v)||ITEM_MASTER.find(x=>x.item_code_lama===v);
+    document.getElementById("fDesc").value=it?it.item_description:""; document.getElementById("fUom").value=it?it.uom:""; document.getElementById("fLama").value=it?it.item_code_lama:"";
+  };
+  onRackChange();
+  updateFilterRack();
+}
+function updateRackDropdown(){
+  let fRack=document.getElementById("fRack");
+  let area=document.getElementById("fArea").value;
+  let racks=getRacks(area);
+  fRack.innerHTML="";
+  racks.forEach(r=> fRack.innerHTML+=`<option value="${r}">${r} - ${area} (${RACK_DATA[area][r].length})</option>`);
+}
+function updateFilterRack(){
+  let fltArea=document.getElementById("fltArea").value;
+  let fltRack=document.getElementById("fltRack");
+  fltRack.innerHTML='<option value="">Semua Rack</option>';
+  if(!fltArea) return;
+  getRacks(fltArea).forEach(r=> fltRack.innerHTML+=`<option>${r}</option>`);
+}
+function onRackChange(){
+  let area=document.getElementById("fArea").value;
+  let rack=document.getElementById("fRack").value;
+  if(!area || !rack) return;
+  let list=getCodes(area, rack);
+  let fc=document.getElementById("fCode"); fc.innerHTML=""; list.forEach(x=> fc.innerHTML+=`<option value="${x.code}">${x.code} ${x.rak_terisi?`(TERISI ${x.jumlah_qty})`:`(KOSONG)`}</option>`);
+  document.getElementById("infoRack").textContent = area + " / " + rack;
+  document.getElementById("infoTotal").textContent = list.length;
+  document.getElementById("infoTerisi").textContent = list.filter(x=>x.rak_terisi).length;
+  document.getElementById("infoKosong").textContent = list.filter(x=>x.rak_kosong).length;
+  document.getElementById("infoQty").textContent = list.reduce((s,x)=>s+x.jumlah_qty,0);
+}
+function getFiltered(){
+  let all=getAllSlots();
+  let fa=document.getElementById("fltArea").value, fr=document.getElementById("fltRack").value, fs=document.getElementById("fltStatus").value, q=document.getElementById("fltSearch").value.trim().toLowerCase();
+  return all.filter(x=>{
+    if(fa && x.area!==fa) return false;
+    if(fr && x.rack!==fr) return false;
+    if(fs==="terisi" && !x.rak_terisi) return false;
+    if(fs==="kosong" && !x.rak_kosong) return false;
+    if(q && !(x.code.toLowerCase().includes(q) || (x.item_code||"").toLowerCase().includes(q) || (x.item_description||"").toLowerCase().includes(q))) return false;
+    return true;
+  });
+}
+function changePage(d){
+  let total = getFiltered().length;
+  let maxPage = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  CURRENT_PAGE = Math.min(Math.max(1, CURRENT_PAGE + d), maxPage);
+  render();
+}
+function render(){
+  let all=getAllSlots();
+  document.getElementById("cTotalAll").textContent=all.length.toLocaleString("id-ID");
+  document.getElementById("cTerisi").textContent=all.filter(x=>x.rak_terisi).length;
+  document.getElementById("cKosong").textContent=all.filter(x=>x.rak_kosong).length;
+  document.getElementById("cQty").textContent=all.reduce((s,x)=>s+x.jumlah_qty,0);
+  let filtered = getFiltered();
+  let maxPage = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  if(CURRENT_PAGE > maxPage) CURRENT_PAGE = maxPage;
+  let start = (CURRENT_PAGE-1)*PAGE_SIZE;
+  let pageData = filtered.slice(start, start+PAGE_SIZE);
+  document.getElementById("tbody").innerHTML=pageData.map(x=>`<tr><td>${x.area}</td><td>${x.rack}</td><td><b>${x.code}</b></td><td>${x.rak_kosong?'<span class="badge kosong">KOSONG</span>':''}</td><td>${x.rak_terisi?'<span class="badge terisi">TERISI</span>':''}</td><td>${x.jumlah_qty}</td><td>${x.item_code||""}</td><td>${x.item_description||""}</td><td>${x.uom||""}</td><td>${x.item_code_lama||""}</td><td>${x.last_update?new Date(x.last_update).toLocaleString("id-ID"):""}</td><td>${x.updated_by||""}</td></tr>`).join("");
+  document.getElementById("footCount").textContent="Halaman "+CURRENT_PAGE+" dari "+maxPage+" • Total Filter "+filtered.length.toLocaleString("id-ID")+" dari "+all.length.toLocaleString("id-ID")+" slot";
+  document.getElementById("btnPrev").disabled = CURRENT_PAGE<=1;
+  document.getElementById("btnNext").disabled = CURRENT_PAGE>=maxPage;
+}
+function doExport(){
+  let h="Area,Rack,Kode Rak,Rak Kosong,Rak Terisi,Jumlah Qty,ITEM CODE,ITEM DESCRIPTION,UOM,ITEM CODE LAMA,Last Update,Updated By";
+  let rows=[]; for(let a in RACK_DATA) for(let r in RACK_DATA[a]) RACK_DATA[a][r].forEach(x=> rows.push(`${x.area},${x.rack},${x.code},${x.rak_kosong?"YA":""},${x.rak_terisi?"YA":""},${x.jumlah_qty},${x.item_code},"${x.item_description}",${x.uom},${x.item_code_lama},${x.last_update},${x.updated_by||""}`));
+  let blob=new Blob([h+"\n"+rows.join("\n")],{type:"text/csv"}); let a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download="warehouse_3004.csv"; a.click();
+}
+setInterval(()=>{ let c=document.getElementById("clock"); if(c) c.textContent=new Date().toLocaleString("id-ID"); },1000);
+</script>
+</body>
+</html>
