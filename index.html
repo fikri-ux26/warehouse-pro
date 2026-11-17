@@ -2,343 +2,230 @@
 <html lang="id">
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Warehouse Pro - GRID</title>
+<title>Warehouse Pro - Sidebar GRID</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
-  *{box-sizing:border-box;font-family:Inter,Arial,sans-serif} body{margin:0;background:#eef2f7}
-  .login-bg{min-height:100vh;background:linear-gradient(135deg,#052e16,#16a34a 50%,#0d9488);display:flex;align-items:center;justify-content:center;padding:16px}
-  .login-card{background:#fff;width:100%;max-width:400px;border-radius:20px;padding:28px;box-shadow:0 20px 50px rgba(0,0,0,.3)}
-  .logo{width:56px;height:56px;border-radius:14px;background:#16a34a;color:#fff;display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:900}
-  label{font-size:12px;font-weight:700;color:#334155;display:block;margin:12px 0 6px}
-  input,select{width:100%;padding:12px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:14px}
-  .btn{width:100%;padding:13px;border:0;border-radius:10px;font-weight:800;cursor:pointer}
-  .btn-login{background:#16a34a;color:#fff;margin-top:18px}
-  .err-box{background:#fef2f2;color:#991b1b;border:1px solid #fecaca;padding:10px;border-radius:10px;font-size:13px;display:none;margin-top:12px}
-  .topbar{background:#fff;border-bottom:1px solid #e2e8f0;padding:12px 18px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:10}
-  .wrap{padding:16px;max-width:1600px;margin:auto}
-  .cards{display:grid;grid-template-columns:repeat(4,1fr);gap:12px} .card{background:#fff;border-radius:16px;padding:16px;box-shadow:0 2px 8px rgba(0,0,0,.05)} .card b{font-size:28px;display:block}
-  .panel{background:#fff;border-radius:16px;padding:16px;margin-top:14px}
-  .row{display:flex;gap:10px;flex-wrap:wrap;align-items:end} .col{flex:1;min-width:150px}
-  .btn-in{background:#16a34a;color:#fff;padding:11px 16px;border:0;border-radius:10px;font-weight:700;cursor:pointer}
-  .btn-out{background:#dc2626;color:#fff;padding:11px 16px;border:0;border-radius:10px;font-weight:700;cursor:pointer}
-  .area-title{font-size:16px;font-weight:900;margin:0 0 4px}
-  .area-sub{font-size:12px;color:#64748b;margin:0 0 12px}
-  .grid-scroll{overflow:auto;padding-bottom:8px}
-  .grid-row{display:flex;gap:10px;align-items:flex-start}
-  .rack-col{min-width:118px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;overflow:hidden;flex-shrink:0}
-  .rack-head{background:#0f172a;color:#fff;padding:10px;text-align:center;font-size:12px;font-weight:800;line-height:1.3}
-  .rack-head span{display:block;font-weight:400;font-size:11px;opacity:.8;margin-top:2px}
-  .slot{margin:6px;padding:8px 6px;border-radius:8px;text-align:center;cursor:pointer;font-size:11px;line-height:1.3;border:1.5px solid transparent}
-  .slot b{display:block;font-size:11.5px}
-  .slot.kosong{background:#fff;border-color:#e2e8f0;color:#475569}
-  .slot.terisi{background:#dcfce7;border-color:#16a34a;color:#14532d;font-weight:700}
-  .slot.active{border-color:#2563eb;box-shadow:0 0 0 2px #bfdbfe}
-  .filter-btn{padding:10px 16px;border-radius:20px;border:0;font-weight:700;cursor:pointer;background:#e2e8f0}
-  .filter-btn.on{background:#0f172a;color:#fff}
-  @media(max-width:800px){.cards{grid-template-columns:repeat(2,1fr)} .rack-col{min-width:105px}}
+*{box-sizing:border-box;font-family:Inter,Arial,sans-serif} body{margin:0;background:#eef2f7}
+.login-bg{min-height:100vh;background:linear-gradient(135deg,#052e16,#16a34a 50%,#0d9488);display:flex;align-items:center;justify-content:center;padding:16px}
+.login-card{background:#fff;width:100%;max-width:400px;border-radius:20px;padding:28px;box-shadow:0 20px 50px rgba(0,0,0,.3)}
+label{font-size:12px;font-weight:700;color:#334155;display:block;margin:12px 0 6px}
+input,select{width:100%;padding:12px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:14px}
+.btn{width:100%;padding:13px;border:0;border-radius:10px;font-weight:800;cursor:pointer;background:#16a34a;color:#fff;margin-top:18px}
+.err-box{background:#fef2f2;color:#991b1b;border:1px solid #fecaca;padding:10px;border-radius:10px;font-size:13px;display:none;margin-top:12px}
+/* LAYOUT SIDEBAR */
+.layout{display:flex;min-height:100vh}
+.sidebar{width:260px;background:#0f172a;color:#fff;padding:18px 14px;position:fixed;top:0;left:0;bottom:0;overflow:auto;z-index:20}
+.sidebar h2{margin:0;font-size:18px} .sidebar p{font-size:11px;color:#94a3b8;margin:4px 0 16px}
+.nav-btn{display:block;width:100%;text-align:left;padding:12px 12px;border:0;border-radius:10px;background:transparent;color:#cbd5e1;font-weight:700;cursor:pointer;margin-bottom:6px;font-size:14px}
+.nav-btn.on{background:#16a34a;color:#fff}
+.nav-btn small{display:block;font-weight:400;font-size:11px;opacity:.8}
+.user-box{margin-top:18px;background:#1e293b;border-radius:12px;padding:12px;font-size:12px}
+.main{flex:1;margin-left:260px;padding:18px;max-width:1600px}
+.topbar{background:#fff;border-radius:14px;padding:12px 14px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;box-shadow:0 2px 8px rgba(0,0,0,.05)}
+.search-input{flex:1;min-width:200px}
+.cards{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:14px} .card{background:#fff;border-radius:16px;padding:16px} .card b{font-size:26px;display:block}
+.panel{background:#fff;border-radius:16px;padding:16px;margin-top:14px}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:end} .col{flex:1;min-width:150px}
+.btn-in{background:#16a34a;color:#fff;padding:11px 16px;border:0;border-radius:10px;font-weight:700;cursor:pointer}
+.btn-out{background:#dc2626;color:#fff;padding:11px 16px;border:0;border-radius:10px;font-weight:700;cursor:pointer}
+.grid-scroll{overflow:auto} .grid-row{display:flex;gap:10px;align-items:flex-start}
+.rack-col{min-width:118px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;overflow:hidden;flex-shrink:0}
+.rack-head{background:#0f172a;color:#fff;padding:10px;text-align:center;font-size:12px;font-weight:800} .rack-head span{display:block;font-weight:400;font-size:11px;opacity:.8}
+.slot{margin:6px;padding:8px 6px;border-radius:8px;text-align:center;cursor:pointer;font-size:11px;border:1.5px solid transparent}
+.slot b{display:block} .slot.kosong{background:#fff;border-color:#e2e8f0;color:#475569} .slot.terisi{background:#dcfce7;border-color:#16a34a;color:#14532d} .slot.active{border-color:#2563eb;box-shadow:0 0 0 2px #bfdbfe}
+.filter-btn{padding:9px 14px;border-radius:20px;border:0;font-weight:700;cursor:pointer;background:#e2e8f0} .filter-btn.on{background:#0f172a;color:#fff}
+table{width:100%;border-collapse:collapse;font-size:13px} th,td{padding:10px;border-bottom:1px solid #eee;text-align:left} th{background:#f8fafc}
+.badge-in{background:#dcfce7;color:#14532d;padding:3px 8px;border-radius:20px;font-weight:700} .badge-out{background:#fee2e2;color:#991b1b;padding:3px 8px;border-radius:20px;font-weight:700}
+@media(max-width:900px){.sidebar{width:200px} .main{margin-left:200px} .cards{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:650px){.layout{flex-direction:column} .sidebar{position:relative;width:100%} .main{margin-left:0}}
 </style>
 </head>
 <body>
-
-<div id="loginPage" class="login-bg">
-  <div class="login-card">
-    <div class="logo">W</div>
-    <h1 style="margin:12px 0 4px">Warehouse Pro</h1>
-    <p style="color:#64748b;font-size:13px;margin:0 0 8px">Silakan login dengan akun Anda.<br>Hubungi admin jika belum punya akun.</p>
-    <label>USERNAME</label><input id="lgUser" placeholder="Masukkan username" autocomplete="username">
-    <label>PASSWORD</label><input id="lgPass" type="password" placeholder="Masukkan password" autocomplete="current-password" onkeydown="if(event.key==='Enter') doLogin()">
-    <div id="lgErr" class="err-box">Username atau password salah</div>
-    <button class="btn btn-login" onclick="doLogin()">Masuk Dashboard</button>
-    <p style="font-size:11px;color:#94a3b8;text-align:center;margin-top:14px">Data tersimpan di server pusat • Update real-time • Total 3.004 Rak</p>
-  </div>
-</div>
+<div id="loginPage" class="login-bg"><div class="login-card"><h1>Warehouse Pro</h1><p style="color:#64748b;font-size:13px">Login dulu ya</p><label>USERNAME</label><input id="lgUser" placeholder="username"><label>PASSWORD</label><input id="lgPass" type="password" placeholder="password" onkeydown="if(event.key==='Enter') doLogin()"><div id="lgErr" class="err-box"></div><button class="btn" onclick="doLogin()">Masuk Dashboard</button></div></div>
 
 <div id="dashPage" style="display:none">
-  <div class="topbar">
-    <div><b>WAREHOUSE PRO - GRID</b><br><span style="font-size:12px;color:#64748b">3.004 Slot Rak • Tampilan Denah Gudang</span></div>
-    <div style="display:flex;gap:8px;align-items:center"><span id="userPill" style="padding:6px 10px;border-radius:20px;background:#dcfce7;font-size:12px;font-weight:700"></span><button onclick="doLogout()" style="padding:9px 14px;border:0;border-radius:8px;background:#fee2e2;color:#991b1b;cursor:pointer;font-weight:700">Logout</button></div>
+<div class="layout">
+  <!-- SIDEBAR KIRI -->
+  <div class="sidebar">
+    <h2>📦 WAREHOUSE PRO</h2><p>Denah Gudang • 3.004 Rak • GRID</p>
+    <button class="nav-btn on" id="mDash" onclick="showPage('dash')">🏠 Dashboard GRID<small>Lihat denah gudang + IN / OUT</small></button>
+    <button class="nav-btn" id="mSearch" onclick="showPage('search')">🔍 Search<small>Cari kode rak / item</small></button>
+    <button class="nav-btn" id="mHist" onclick="showPage('history')">🕒 History Terakhir<small>20 transaksi terakhir, real-time</small></button>
+    <button class="nav-btn" id="mExport" onclick="doExport()">📥 Export CSV<small>Download semua stok</small></button>
+    <div class="user-box"><b id="userPill">-</b><br><span id="clock" style="color:#94a3b8"></span><br><span style="color:#4ade80">● LIVE - Real-time</span><br><br><button onclick="doLogout()" style="width:100%;padding:10px;border:0;border-radius:8px;background:#fee2e2;color:#991b1b;font-weight:700;cursor:pointer">Logout</button></div>
+    <p style="margin-top:14px">Hijau = TERISI<br>Putih = KOSONG<br>Klik kotak untuk IN / OUT</p>
   </div>
-  <div class="wrap">
-    <div class="cards">
-      <div class="card"><small>Total Rak - Semua</small><b id="cTotalAll">3.004</b><span id="cTotalFilter" style="font-size:12px;color:#888"></span></div>
-      <div class="card"><small>Rak Terisi</small><b id="cTerisi" style="color:#16a34a">0</b></div>
-      <div class="card"><small>Rak Kosong</small><b id="cKosong" style="color:#ea580c">3.004</b></div>
-      <div class="card"><small>Total Qty</small><b id="cQty" style="color:#2563eb">0</b></div>
+
+  <!-- KONTEN KANAN -->
+  <div class="main">
+    <div class="topbar">
+      <b id="pageTitle">Dashboard GRID</b>
+      <input id="globalSearch" class="search-input" placeholder="🔍 Search global - ketik A0111 / FH0111 / SA.01.1 / PLA-000001..." oninput="onGlobalSearch(this.value)">
+      <span id="liveDot" style="font-size:12px;color:#16a34a;font-weight:700">● LIVE</span>
     </div>
 
-    <div class="panel" style="display:flex;gap:16px;flex-wrap:wrap;font-size:13px">
-      <span><b>Rack Dipilih:</b> <span id="infoRack">-</span></span>
-      <span><b>Total di Rack Ini:</b> <span id="infoTotal">0</span></span>
-      <span><b>Terisi:</b> <span id="infoTerisi">0</span></span>
-      <span><b>Kosong:</b> <span id="infoKosong">0</span></span>
-      <span><b>Qty:</b> <span id="infoQty">0</span></span>
-      <span style="margin-left:auto;color:#64748b" id="clock"></span>
-      <span id="liveDot" style="color:#16a34a;font-weight:700">● LIVE</span>
-    </div>
-
-    <div class="panel">
-      <h3 style="margin:0 0 12px">Form IN / OUT - Klik kotak di GRID langsung keisi</h3>
-      <div class="row">
-        <div class="col"><label>AREA</label><select id="fArea"></select></div>
-        <div class="col"><label>RACK</label><select id="fRack"></select></div>
-        <div class="col"><label>KODE RAK</label><select id="fCode"></select></div>
-        <div class="col"><label>QTY</label><input id="fQty" type="number" value="1" min="1"></div>
+    <!-- PAGE DASHBOARD -->
+    <div id="page-dash">
+      <div class="cards">
+        <div class="card"><small>Total Rak</small><b id="cTotalAll">0</b></div>
+        <div class="card"><small>Terisi</small><b id="cTerisi" style="color:#16a34a">0</b></div>
+        <div class="card"><small>Kosong</small><b id="cKosong" style="color:#ea580c">0</b></div>
+        <div class="card"><small>Total Qty</small><b id="cQty" style="color:#2563eb">0</b></div>
       </div>
-      <div class="row" style="margin-top:12px">
-        <div class="col"><label>ITEM CODE</label><input id="fItem" list="itemList" placeholder="PLA-000001 atau RAW-000210"><datalist id="itemList"></datalist></div>
-        <div class="col"><label>ITEM DESCRIPTION</label><input id="fDesc" readonly></div>
-        <div class="col"><label>UOM</label><input id="fUom" readonly></div>
-        <div class="col"><label>ITEM CODE LAMA</label><input id="fLama" readonly></div>
+      <div class="panel">
+        <h3 style="margin:0 0 12px">Form IN / OUT - Klik kotak di bawah langsung keisi</h3>
+        <div style="display:flex;gap:14px;flex-wrap:wrap;font-size:13px;margin-bottom:12px"><span><b>Rak Dipilih:</b> <span id="infoRack">-</span></span><span><b>Terisi:</b> <span id="infoTerisi">0</span></span><span><b>Kosong:</b> <span id="infoKosong">0</span></span><span><b>Qty:</b> <span id="infoQty">0</span></span></div>
+        <div class="row"><div class="col"><label>AREA</label><select id="fArea"></select></div><div class="col"><label>RACK</label><select id="fRack"></select></div><div class="col"><label>KODE RAK</label><select id="fCode"></select></div><div class="col"><label>QTY</label><input id="fQty" type="number" value="1" min="1"></div></div>
+        <div class="row" style="margin-top:12px"><div class="col"><label>ITEM CODE</label><input id="fItem" list="itemList" placeholder="PLA-000001"><datalist id="itemList"></datalist></div><div class="col"><label>ITEM DESCRIPTION</label><input id="fDesc" readonly></div><div class="col"><label>UOM</label><input id="fUom" readonly></div><div class="col"><label>ITEM CODE LAMA</label><input id="fLama" readonly></div></div>
+        <div class="row" style="margin-top:14px"><button class="btn-in" id="btnIn" onclick="doIn()">+ STOCK IN</button><button class="btn-out" id="btnOut" onclick="doOut()">- STOCK OUT</button><span id="msg"></span></div>
       </div>
-      <div class="row" style="margin-top:14px">
-        <button class="btn-in" id="btnIn" onclick="doIn()">+ STOCK IN</button>
-        <button class="btn-out" id="btnOut" onclick="doOut()">- STOCK OUT</button>
-        <button onclick="doExport()" style="padding:11px 16px;border:0;border-radius:10px;background:#0f172a;color:#fff;font-weight:700;cursor:pointer">Export CSV</button>
-        <span id="msg"></span>
+      <div class="panel">
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px"><button class="filter-btn on" id="btnAll" onclick="setAreaFilter('')">Semua</button><button class="filter-btn" id="btnRM1" onclick="setAreaFilter('RAW MATERIAL')">RAW MATERIAL (1.777)</button><button class="filter-btn" id="btnSmall" onclick="setAreaFilter('SMALL RACK')">SMALL RACK (42)</button><button class="filter-btn" id="btnRM2" onclick="setAreaFilter('RAW MATERIAL (2)')">RAW MATERIAL (2) (1.185)</button></div>
+        <div id="gridContainer"></div>
+        <div id="footCount" style="font-size:12px;color:#888;text-align:center;margin-top:8px"></div>
       </div>
     </div>
 
-    <div class="panel">
-      <h3 style="margin:0 0 12px">Denah Gudang - GRID</h3>
-      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">
-        <button class="filter-btn on" id="btnAll" onclick="setAreaFilter('')">Semua (3.004)</button>
-        <button class="filter-btn" id="btnRM1" onclick="setAreaFilter('RAW MATERIAL')">RAW MATERIAL (1.777)</button>
-        <button class="filter-btn" id="btnSmall" onclick="setAreaFilter('SMALL RACK')">SMALL RACK (42)</button>
-        <button class="filter-btn" id="btnRM2" onclick="setAreaFilter('RAW MATERIAL (2)')">RAW MATERIAL (2) (1.185)</button>
-      </div>
-      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px;align-items:end">
-        <div class="col" style="max-width:320px"><label>Cari Kode / Item - misal A0111 / FH0111 / SA.01.1</label><input id="fltSearch" placeholder="Ketik kode rak..." oninput="render()"></div>
-        <div style="font-size:12px;color:#64748b">Hijau = TERISI, Putih = KOSONG, Klik kotak untuk pilih rak</div>
-      </div>
-      <div id="gridContainer"></div>
-      <div id="footCount" style="font-size:12px;color:#888;text-align:center;margin-top:8px"></div>
+    <!-- PAGE SEARCH -->
+    <div id="page-search" style="display:none">
+      <div class="panel"><h3>🔍 Hasil Search</h3><p style="font-size:13px;color:#64748b">Ketik di search atas. Bisa cari kode rak, item code, atau deskripsi.</p><div id="searchResult"></div></div>
+    </div>
+
+    <!-- PAGE HISTORY -->
+    <div id="page-history" style="display:none">
+      <div class="panel"><h3>🕒 History Terakhir - 20 Transaksi Terakhir</h3><p style="font-size:12px;color:#64748b">Update otomatis kalau ada yang IN / OUT dari HP lain.</p><table><thead><tr><th>Waktu</th><th>Type</th><th>Kode Rak</th><th>Item</th><th>Qty</th><th>User</th></tr></thead><tbody id="histBody"><tr><td colspan="6" style="text-align:center;color:#888">Belum ada transaksi</td></tr></tbody></table></div>
     </div>
   </div>
+</div>
 </div>
 
 <script>
 const SUPABASE_URL = "https://scubdphdxcwwhtimchoq.supabase.co";
 const SUPABASE_KEY = "sb_publishable_ep7431Nv5EwHUpxCswGlXw_Hb2IhIA2";
 const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
-let CURRENT_USER = null;
-let RACK_DATA = {};
-let ITEM_MASTER = [];
-let ACTIVE_AREA = "";
-let SELECTED_CODE = "";
+let CURRENT_USER=null, RACK_DATA={}, ITEM_MASTER=[], ACTIVE_AREA="", SELECTED_CODE="", GLOBAL_Q="";
 
 async function doLogin(){
-  let username = document.getElementById("lgUser").value.trim().toLowerCase();
-  let password = document.getElementById("lgPass").value;
-  if(!username || !password) return showLoginErr("Isi username dan password");
-  const { data, error } = await supabaseClient.rpc("login_user", { p_username: username, p_password: password });
-  if(error || !data || data.length===0) return showLoginErr("Username atau password salah");
-  // log login - kalau tabel login_logs belum ada, tidak masalah, lanjut aja
-  try{ await supabaseClient.from("login_logs").insert([{username:username, status:"BERHASIL", user_agent:navigator.userAgent}]); }catch(e){}
-  CURRENT_USER = data[0];
-  document.getElementById("loginPage").style.display="none";
-  document.getElementById("dashPage").style.display="block";
-  document.getElementById("userPill").textContent = CURRENT_USER.username + " • " + CURRENT_USER.role;
-  let canInOut = CURRENT_USER.role !== "VIEWER";
-  document.getElementById("btnIn").disabled = !canInOut;
-  document.getElementById("btnOut").disabled = !canInOut;
-  if(!canInOut) document.getElementById("msg").textContent = "Akun Viewer hanya bisa melihat";
-  await loadAllData();
-  subscribeRealtime();
+  let username=document.getElementById("lgUser").value.trim().toLowerCase();
+  let password=document.getElementById("lgPass").value;
+  if(!username||!password) return showErr("Isi username dan password");
+  const {data,error}=await supabaseClient.rpc("login_user",{p_username:username,p_password:password});
+  if(error||!data||data.length===0) return showErr("Username atau password salah");
+  try{ await supabaseClient.from("login_logs").insert([{username:username,status:"BERHASIL",user_agent:navigator.userAgent}]); }catch(e){}
+  CURRENT_USER=data[0];
+  document.getElementById("loginPage").style.display="none"; document.getElementById("dashPage").style.display="block";
+  document.getElementById("userPill").textContent=CURRENT_USER.username+" • "+CURRENT_USER.role;
+  await loadAllData(); subscribeRealtime(); loadHistory();
 }
-function showLoginErr(msg){ let e=document.getElementById("lgErr"); e.textContent=msg; e.style.display="block"; }
-function doLogout(){
-  CURRENT_USER=null;
-  document.getElementById("dashPage").style.display="none";
-  document.getElementById("loginPage").style.display="flex";
-  document.getElementById("lgPass").value="";
+function showErr(m){let e=document.getElementById("lgErr"); e.textContent=m; e.style.display="block";}
+function doLogout(){ CURRENT_USER=null; document.getElementById("dashPage").style.display="none"; document.getElementById("loginPage").style.display="flex"; }
+
+function showPage(p){
+  ["dash","search","history"].forEach(x=>{ document.getElementById("page-"+x).style.display = x===p?"block":"none"; document.getElementById("m"+(x==="dash"?"Dash":x==="search"?"Search":"Hist")).classList.toggle("on", x===p); });
+  document.getElementById("pageTitle").textContent = p==="dash"?"Dashboard GRID":p==="search"?"Search":p==="history"?"History Terakhir":"Dashboard";
+  if(p==="history") loadHistory();
 }
+function onGlobalSearch(v){ GLOBAL_Q=v.toLowerCase(); if(v.trim()!=="") showPage("search"); render(); renderSearch(); }
 
 async function loadAllData(){
-  ITEM_MASTER = [];
-  let fromM = 0;
-  while(true){
-    let { data: master } = await supabaseClient.from("item_master").select("*").range(fromM, fromM + 999);
-    if(!master || master.length === 0) break;
-    ITEM_MASTER = ITEM_MASTER.concat(master);
-    if(master.length < 1000) break;
-    fromM += 1000;
-  }
-  let allRacks = [];
-  let fromR = 0;
-  while(true){
-    let { data: racks } = await supabaseClient.from("racks").select("*").order("code").range(fromR, fromR + 999);
-    if(!racks || racks.length === 0) break;
-    allRacks = allRacks.concat(racks);
-    if(racks.length < 1000) break;
-    fromR += 1000;
-  }
-  RACK_DATA = {};
-  (allRacks||[]).forEach(r=>{
-    if(!RACK_DATA[r.area]) RACK_DATA[r.area]={};
-    if(!RACK_DATA[r.area][r.rack]) RACK_DATA[r.area][r.rack]=[];
-    RACK_DATA[r.area][r.rack].push(r);
-  });
-  initDropdowns();
-  render();
+  ITEM_MASTER=[]; let fromM=0;
+  while(true){ let {data}=await supabaseClient.from("item_master").select("*").range(fromM,fromM+999); if(!data||data.length===0) break; ITEM_MASTER=ITEM_MASTER.concat(data); if(data.length<1000) break; fromM+=1000; }
+  let all=[]; let fromR=0;
+  while(true){ let {data}=await supabaseClient.from("racks").select("*").order("code").range(fromR,fromR+999); if(!data||data.length===0) break; all=all.concat(data); if(data.length<1000) break; fromR+=1000; }
+  RACK_DATA={}; all.forEach(r=>{ if(!RACK_DATA[r.area]) RACK_DATA[r.area]={}; if(!RACK_DATA[r.area][r.rack]) RACK_DATA[r.area][r.rack]=[]; RACK_DATA[r.area][r.rack].push(r); });
+  initDropdowns(); render(); renderSearch();
 }
-
 function subscribeRealtime(){
-  supabaseClient.channel("racks-live")
-    .on("postgres_changes", { event:"*", schema:"public", table:"racks" }, (payload)=>{
-      loadAllData();
-      document.getElementById("liveDot").textContent = "● LIVE - Ada Update Baru " + new Date().toLocaleTimeString("id-ID");
-    })
-    .subscribe();
+  supabaseClient.channel("racks-live").on("postgres_changes",{event:"*",schema:"public",table:"racks"},()=>{ loadAllData(); document.getElementById("liveDot").textContent="● LIVE - Ada Update "+new Date().toLocaleTimeString("id-ID"); }).subscribe();
+  supabaseClient.channel("trx-live").on("postgres_changes",{event:"*",schema:"public",table:"transactions"},()=>{ loadHistory(); }).subscribe();
 }
-
+async function loadHistory(){
+  let {data}=await supabaseClient.from("transactions").select("*").order("created_at",{ascending:false}).limit(20);
+  let tb=document.getElementById("histBody"); if(!data||data.length===0){ tb.innerHTML=`<tr><td colspan="6" style="text-align:center;color:#888">Belum ada transaksi</td></tr>`; return; }
+  tb.innerHTML=data.map(t=>`<tr><td>${new Date(t.created_at).toLocaleString("id-ID")}</td><td><span class="${t.type==="IN"?"badge-in":"badge-out"}">${t.type}</span></td><td><b>${t.code||""}</b> • ${t.rack||""}</td><td>${t.item_code||""}</td><td>${t.qty}</td><td>${t.username||""}</td></tr>`).join("");
+}
 async function doIn(){
-  if(CURRENT_USER.role==="VIEWER") return alert("Viewer tidak bisa IN / OUT");
-  let area=document.getElementById("fArea").value, rack=document.getElementById("fRack").value, code=document.getElementById("fCode").value, qty=parseInt(document.getElementById("fQty").value||"0"), itemCode=document.getElementById("fItem").value;
-  let item = ITEM_MASTER.find(x=>x.item_code===itemCode) || ITEM_MASTER.find(x=>x.item_code_lama===itemCode);
-  if(!item) return alert("Item tidak ada di Master");
-  let { data: slot } = await supabaseClient.from("racks").select("*").eq("code", code).single();
-  if(!slot) return alert("Kode rak tidak ditemukan");
+  if(CURRENT_USER.role==="VIEWER") return alert("Viewer tidak bisa IN/OUT");
+  let code=document.getElementById("fCode").value, qty=parseInt(document.getElementById("fQty").value||"0"), itemCode=document.getElementById("fItem").value;
+  let item=ITEM_MASTER.find(x=>x.item_code===itemCode)||ITEM_MASTER.find(x=>x.item_code_lama===itemCode); if(!item) return alert("Item tidak ada di Master");
+  let {data:slot}=await supabaseClient.from("racks").select("*").eq("code",code).single(); if(!slot) return alert("Kode rak tidak ditemukan");
   if(slot.jumlah_qty>0 && slot.item_code!==item.item_code) return alert("Rak sudah terisi item lain");
-  await supabaseClient.from("racks").update({
-    jumlah_qty: (slot.jumlah_qty||0) + qty,
-    item_code: item.item_code,
-    item_description: item.item_description,
-    uom: item.uom,
-    item_code_lama: item.item_code_lama,
-    rak_terisi: true, rak_kosong: false,
-    last_update: new Date().toISOString(),
-    updated_by: CURRENT_USER.username
-  }).eq("code", code);
-  await supabaseClient.from("transactions").insert({ area, rack, code, item_code: item.item_code, qty, type:"IN", username: CURRENT_USER.username });
-  document.getElementById("msg").textContent = "Berhasil IN " + qty + " ke " + code + " - Tersimpan di server";
+  await supabaseClient.from("racks").update({jumlah_qty:(slot.jumlah_qty||0)+qty,item_code:item.item_code,item_description:item.item_description,uom:item.uom,item_code_lama:item.item_code_lama,rak_terisi:true,rak_kosong:false,last_update:new Date().toISOString(),updated_by:CURRENT_USER.username}).eq("code",code);
+  await supabaseClient.from("transactions").insert({area:slot.area,rack:slot.rack,code,item_code:item.item_code,qty,type:"IN",username:CURRENT_USER.username});
+  document.getElementById("msg").textContent="Berhasil IN "+qty+" ke "+code;
 }
-
 async function doOut(){
-  if(CURRENT_USER.role==="VIEWER") return alert("Viewer tidak bisa IN / OUT");
+  if(CURRENT_USER.role==="VIEWER") return alert("Viewer tidak bisa IN/OUT");
   let code=document.getElementById("fCode").value, qty=parseInt(document.getElementById("fQty").value||"0");
-  let { data: slot } = await supabaseClient.from("racks").select("*").eq("code", code).single();
-  if(!slot) return alert("Kode rak tidak ditemukan");
-  if((slot.jumlah_qty||0) < qty) return alert("Stok hanya " + slot.jumlah_qty);
-  let newQty = slot.jumlah_qty - qty;
-  await supabaseClient.from("racks").update({
-    jumlah_qty: newQty,
-    rak_terisi: newQty>0, rak_kosong: newQty===0,
-    item_code: newQty===0?"":slot.item_code,
-    item_description: newQty===0?"":slot.item_description,
-    uom: newQty===0?"":slot.uom,
-    item_code_lama: newQty===0?"":slot.item_code_lama,
-    last_update: new Date().toISOString(),
-    updated_by: CURRENT_USER.username
-  }).eq("code", code);
-  await supabaseClient.from("transactions").insert({ area:slot.area, rack:slot.rack, code, item_code: slot.item_code, qty, type:"OUT", username: CURRENT_USER.username });
-  document.getElementById("msg").textContent = "Berhasil OUT " + qty + " dari " + code;
+  let {data:slot}=await supabaseClient.from("racks").select("*").eq("code",code).single(); if(!slot) return alert("Kode rak tidak ditemukan");
+  if((slot.jumlah_qty||0)<qty) return alert("Stok hanya "+slot.jumlah_qty);
+  let nq=slot.jumlah_qty-qty;
+  await supabaseClient.from("racks").update({jumlah_qty:nq,rak_terisi:nq>0,rak_kosong:nq===0,item_code:nq===0?"":slot.item_code,item_description:nq===0?"":slot.item_description,uom:nq===0?"":slot.uom,item_code_lama:nq===0?"":slot.item_code_lama,last_update:new Date().toISOString(),updated_by:CURRENT_USER.username}).eq("code",code);
+  await supabaseClient.from("transactions").insert({area:slot.area,rack:slot.rack,code,item_code:slot.item_code,qty,type:"OUT",username:CURRENT_USER.username});
+  document.getElementById("msg").textContent="Berhasil OUT "+qty+" dari "+code;
 }
-
-function getAllSlots(){ let all=[]; for(let a in RACK_DATA) for(let r in RACK_DATA[a]) RACK_DATA[a][r].forEach(x=>all.push(x)); return all; }
-function getAreas(){return Object.keys(RACK_DATA)} function getRacks(a){return Object.keys(RACK_DATA[a]||{})} function getCodes(a,r){return RACK_DATA[a]?.[r]||[]}
-
+function getAllSlots(){let a=[]; for(let x in RACK_DATA) for(let r in RACK_DATA[x]) RACK_DATA[x][r].forEach(v=>a.push(v)); return a;}
 function initDropdowns(){
-  let fArea=document.getElementById("fArea"), fRack=document.getElementById("fRack"), fCode=document.getElementById("fCode");
-  fArea.innerHTML="";
-  getAreas().forEach(a=>{ fArea.innerHTML+=`<option>${a}</option>`; });
-  fRack.innerHTML=""; for(let a in RACK_DATA) for(let r in RACK_DATA[a]) fRack.innerHTML+=`<option value="${r}" data-area="${a}">${r} - ${a} (${RACK_DATA[a][r].length})</option>`;
+  let fA=document.getElementById("fArea"), fR=document.getElementById("fRack"); fA.innerHTML=""; Object.keys(RACK_DATA).forEach(a=> fA.innerHTML+=`<option>${a}</option>`);
+  fR.innerHTML=""; for(let a in RACK_DATA) for(let r in RACK_DATA[a]) fR.innerHTML+=`<option value="${r}" data-area="${a}">${r} - ${a} (${RACK_DATA[a][r].length})</option>`;
   let dl=document.getElementById("itemList"); dl.innerHTML=""; ITEM_MASTER.forEach(i=> dl.innerHTML+=`<option value="${i.item_code}">${i.item_description} | ${i.uom}</option>`);
-  fArea.onchange=()=>{ let racks=getRacks(fArea.value); if(racks.length) fRack.value=racks[0]; onRackChange(); };
-  fRack.onchange=onRackChange;
+  fA.onchange=()=>{ let rs=Object.keys(RACK_DATA[fA.value]||{}); if(rs.length) fR.value=rs[0]; onRackChange(); }; fR.onchange=onRackChange;
   document.getElementById("fItem").oninput=(e)=>{ let v=e.target.value; let it=ITEM_MASTER.find(x=>x.item_code===v)||ITEM_MASTER.find(x=>x.item_code_lama===v); document.getElementById("fDesc").value=it?it.item_description:""; document.getElementById("fUom").value=it?it.uom:""; document.getElementById("fLama").value=it?it.item_code_lama:""; };
   onRackChange();
 }
 function onRackChange(){
   let opt=document.getElementById("fRack").options[document.getElementById("fRack").selectedIndex]; if(!opt) return;
   document.getElementById("fArea").value=opt.getAttribute("data-area");
-  let list=getCodes(document.getElementById("fArea").value, document.getElementById("fRack").value);
+  let list=RACK_DATA[document.getElementById("fArea").value]?.[document.getElementById("fRack").value]||[];
   let fc=document.getElementById("fCode"); fc.innerHTML=""; list.forEach(x=> fc.innerHTML+=`<option value="${x.code}">${x.code} ${x.rak_terisi?`(TERISI ${x.jumlah_qty})`:`(KOSONG)`}</option>`);
-  updateInfoPanel();
+  document.getElementById("infoRack").textContent=document.getElementById("fRack").value+" - "+document.getElementById("fArea").value;
+  document.getElementById("infoTerisi").textContent=list.filter(x=>x.rak_terisi).length;
+  document.getElementById("infoKosong").textContent=list.filter(x=>x.rak_kosong).length;
+  document.getElementById("infoQty").textContent=list.reduce((s,x)=>s+(x.jumlah_qty||0),0);
 }
-function updateInfoPanel(){
-  let area=document.getElementById("fArea").value, rack=document.getElementById("fRack").value;
-  let list=getCodes(area, rack);
-  document.getElementById("infoRack").textContent = rack + " - " + area;
-  document.getElementById("infoTotal").textContent = list.length;
-  document.getElementById("infoTerisi").textContent = list.filter(x=>x.rak_terisi).length;
-  document.getElementById("infoKosong").textContent = list.filter(x=>x.rak_kosong).length;
-  document.getElementById("infoQty").textContent = list.reduce((s,x)=>s+(x.jumlah_qty||0),0);
-}
-
-function setAreaFilter(area){
-  ACTIVE_AREA = area;
-  ["btnAll","btnRM1","btnSmall","btnRM2"].forEach(id=> document.getElementById(id).classList.remove("on"));
-  let activeId = area === "" ? "btnAll" : area === "RAW MATERIAL" ? "btnRM1" : area === "SMALL RACK" ? "btnSmall" : "btnRM2";
-  document.getElementById(activeId).classList.add("on");
-  render();
-}
-
-function selectSlot(code, area, rack){
-  SELECTED_CODE = code;
-  document.getElementById("fArea").value = area;
-  // cari option rack yang sesuai
-  let fRack=document.getElementById("fRack");
-  for(let i=0;i<fRack.options.length;i++){ if(fRack.options[i].value===rack && fRack.options[i].getAttribute("data-area")===area){ fRack.selectedIndex=i; break; } }
-  onRackChange();
-  document.getElementById("fCode").value = code;
-  updateInfoPanel();
-  render();
+function setAreaFilter(a){ ACTIVE_AREA=a; ["btnAll","btnRM1","btnSmall","btnRM2"].forEach(id=> document.getElementById(id).classList.remove("on")); document.getElementById(a===""?"btnAll":a==="RAW MATERIAL"?"btnRM1":a==="SMALL RACK"?"btnSmall":"btnRM2").classList.add("on"); render(); }
+function selectSlot(code,area,rack){
+  SELECTED_CODE=code; document.getElementById("fArea").value=area;
+  let fR=document.getElementById("fRack"); for(let i=0;i<fR.options.length;i++){ if(fR.options[i].value===rack && fR.options[i].getAttribute("data-area")===area){ fR.selectedIndex=i; break; } }
+  onRackChange(); document.getElementById("fCode").value=code; onRackChange(); showPage("dash"); render();
   document.querySelector(".panel").scrollIntoView({behavior:"smooth"});
 }
-
 function render(){
   let all=getAllSlots();
   document.getElementById("cTotalAll").textContent=all.length.toLocaleString("id-ID");
   document.getElementById("cTerisi").textContent=all.filter(x=>x.rak_terisi).length;
   document.getElementById("cKosong").textContent=all.filter(x=>x.rak_kosong).length;
   document.getElementById("cQty").textContent=all.reduce((s,x)=>s+(x.jumlah_qty||0),0);
-
-  let search = (document.getElementById("fltSearch").value||"").toLowerCase();
-  let areasToShow = ACTIVE_AREA ? [ACTIVE_AREA] : Object.keys(RACK_DATA);
-  // Urutan sesuai Excel: RAW MATERIAL dulu, SMALL RACK, baru RAW MATERIAL (2)
-  let order = ["RAW MATERIAL","SMALL RACK","RAW MATERIAL (2)"];
-  areasToShow.sort((a,b)=> order.indexOf(a) - order.indexOf(b));
-
-  let html = "";
-  let totalShown = 0;
-  areasToShow.forEach(area=>{
-    let racks = Object.keys(RACK_DATA[area]||{}).sort();
-    // hitung total area ini
-    let areaSlots = [];
-    racks.forEach(r=> areaSlots = areaSlots.concat(RACK_DATA[area][r]));
-    let areaTerisi = areaSlots.filter(x=>x.rak_terisi).length;
-    let areaQty = areaSlots.reduce((s,x)=>s+(x.jumlah_qty||0),0);
-
-    // filter search
-    let racksHtml = "";
+  let order=["RAW MATERIAL","SMALL RACK","RAW MATERIAL (2)"]; let areas=ACTIVE_AREA?[ACTIVE_AREA]:Object.keys(RACK_DATA); areas.sort((a,b)=>order.indexOf(a)-order.indexOf(b));
+  let html="", totalShown=0;
+  areas.forEach(area=>{
+    let racks=Object.keys(RACK_DATA[area]||{}).sort(); let areaSlots=[]; racks.forEach(r=> areaSlots=areaSlots.concat(RACK_DATA[area][r]));
+    let racksHtml="";
     racks.forEach(rack=>{
-      let list = [...(RACK_DATA[area][rack]||[])].sort((a,b)=> a.code.localeCompare(b.code));
-      if(search) list = list.filter(x=> x.code.toLowerCase().includes(search) || (x.item_code||"").toLowerCase().includes(search) || (x.item_description||"").toLowerCase().includes(search));
-      if(list.length===0) return;
-      totalShown += list.length;
-      let terisi = (RACK_DATA[area][rack]||[]).filter(x=>x.rak_terisi).length;
-      racksHtml += `<div class="rack-col"><div class="rack-head">${rack}<span>${(RACK_DATA[area][rack]||[]).length} slot • ${terisi} terisi</span></div>`;
-      list.forEach(x=>{
-        let cls = x.rak_terisi ? "terisi" : "kosong";
-        let active = x.code===SELECTED_CODE ? " active" : "";
-        let detail = x.rak_terisi ? `<span style="font-size:10px">${x.item_code||""} • Qty ${x.jumlah_qty}</span>` : `<span style="font-size:10px;color:#94a3b8">KOSONG</span>`;
-        racksHtml += `<div class="slot ${cls}${active}" onclick="selectSlot('${x.code}','${area}','${rack}')"><b>${x.code}</b>${detail}</div>`;
-      });
-      racksHtml += `</div>`;
+      let list=[...(RACK_DATA[area][rack]||[])].sort((a,b)=>a.code.localeCompare(b.code));
+      if(GLOBAL_Q) list=list.filter(x=> x.code.toLowerCase().includes(GLOBAL_Q) || (x.item_code||"").toLowerCase().includes(GLOBAL_Q) || (x.item_description||"").toLowerCase().includes(GLOBAL_Q));
+      if(list.length===0) return; totalShown+=list.length;
+      let terisi=(RACK_DATA[area][rack]||[]).filter(x=>x.rak_terisi).length;
+      racksHtml+=`<div class="rack-col"><div class="rack-head">${rack}<span>${RACK_DATA[area][rack].length} slot • ${terisi} terisi</span></div>`;
+      list.forEach(x=>{ let cls=x.rak_terisi?"terisi":"kosong"; let act=x.code===SELECTED_CODE?" active":""; let det=x.rak_terisi?`<span style="font-size:10px">${x.item_code||""} • Qty ${x.jumlah_qty}</span>`:`<span style="font-size:10px;color:#94a3b8">KOSONG</span>`; racksHtml+=`<div class="slot ${cls}${act}" onclick="selectSlot('${x.code}','${area}','${rack}')"><b>${x.code}</b>${det}</div>`; });
+      racksHtml+=`</div>`;
     });
     if(!racksHtml) return;
-    html += `<div style="margin-top:18px"><p class="area-title">${area} - ${areaSlots.length} Rak</p><p class="area-sub">Terisi ${areaTerisi} • Total Qty ${areaQty}</p><div class="grid-scroll"><div class="grid-row">${racksHtml}</div></div></div>`;
+    html+=`<div style="margin-top:18px"><b>${area} - ${areaSlots.length} Rak</b><div class="grid-scroll" style="margin-top:8px"><div class="grid-row">${racksHtml}</div></div></div>`;
   });
-
-  document.getElementById("gridContainer").innerHTML = html || `<p style="text-align:center;color:#888">Tidak ada rak yang cocok dengan pencarian</p>`;
-  document.getElementById("footCount").textContent = search ? `Menampilkan ${totalShown} slot hasil pencarian` : `Total Semua ${all.length} slot - Harus 3.004 • RAW MATERIAL 1.777 • SMALL RACK 42 • RAW MATERIAL (2) 1.185`;
+  document.getElementById("gridContainer").innerHTML=html||`<p style="text-align:center;color:#888">Tidak ada hasil</p>`;
+  document.getElementById("footCount").textContent=`Total ${all.length} slot • Harusnya 3.004 • RAW MATERIAL 1.777 • SMALL RACK 42 • RAW MATERIAL (2) 1.185`;
 }
-
+function renderSearch(){
+  let el=document.getElementById("searchResult"); if(!GLOBAL_Q){ el.innerHTML=`<p style="color:#888">Ketik di search atas untuk cari...</p>`; return; }
+  let all=getAllSlots().filter(x=> x.code.toLowerCase().includes(GLOBAL_Q) || (x.item_code||"").toLowerCase().includes(GLOBAL_Q) || (x.item_description||"").toLowerCase().includes(GLOBAL_Q));
+  if(all.length===0){ el.innerHTML=`<p>Tidak ketemu "${GLOBAL_Q}" - Cek lagi kodenya, mungkin masih kode dummy A0001, belum kode asli A0111</p>`; return; }
+  el.innerHTML=`<p>Ditemukan ${all.length} hasil untuk "<b>${GLOBAL_Q}</b>"</p><table><thead><tr><th>Kode Rak</th><th>Area / Rack</th><th>Status</th><th>Item</th><th>Qty</th><th>Aksi</th></tr></thead><tbody>`+all.slice(0,50).map(x=>`<tr><td><b>${x.code}</b></td><td>${x.area} / ${x.rack}</td><td>${x.rak_terisi?"TERISI":"KOSONG"}</td><td>${x.item_code||"-"} ${x.item_description||""}</td><td>${x.jumlah_qty||0}</td><td><button onclick="selectSlot('${x.code}','${x.area}','${x.rack}')">Pilih</button></td></tr>`).join("")+`</tbody></table>`;
+}
 function doExport(){
   let h="Area,Rack,Kode Rak,Rak Kosong,Rak Terisi,Jumlah Qty,ITEM CODE,ITEM DESCRIPTION,UOM,ITEM CODE LAMA,Last Update,Updated By";
   let rows=[]; for(let a in RACK_DATA) for(let r in RACK_DATA[a]) RACK_DATA[a][r].forEach(x=> rows.push(`${x.area},${x.rack},${x.code},${x.rak_kosong?"YA":""},${x.rak_terisi?"YA":""},${x.jumlah_qty},${x.item_code},"${x.item_description}",${x.uom},${x.item_code_lama},${x.last_update},${x.updated_by||""}`));
-  let blob=new Blob([h+"\n"+rows.join("\n")],{type:"text/csv"}); let a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download="warehouse_3004_grid.csv"; a.click();
+  let blob=new Blob([h+"\n"+rows.join("\n")],{type:"text/csv"}); let a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download="warehouse_grid.csv"; a.click();
 }
 setInterval(()=>{ let c=document.getElementById("clock"); if(c) c.textContent=new Date().toLocaleString("id-ID"); },1000);
 </script>
