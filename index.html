@@ -129,17 +129,29 @@ const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 let CURRENT_USER=null, RACK_DATA={}, ITEM_MASTER=[], ACTIVE_AREA="", SELECTED_CODE="", GLOBAL_Q="";
   // ===== LOADING + TOAST =====
 function showLoading(text = "Menyimpan...") {
-    const el = document.getElementById("loadingOverlay");
-    el.querySelector("div:nth-child(2)").textContent = text;
-    el.style.display = "flex";
-    document.querySelectorAll("button").forEach(b => b.disabled = true);
+    // Timer duluan, biar kalau error di bawah, tetep mati
     if (!window._loadingTimer) {
         window._loadingTimer = setTimeout(() => {
             hideLoading();
             window._loadingTimer = null;
         }, 5000);
     }
-    el.onclick = () => { hideLoading(); window._loadingTimer = null; };
+    try {
+        const el = document.getElementById("loadingOverlay");
+        if (!el) return;
+        const label = el.querySelector("div:nth-child(2)");
+        if (label) label.textContent = text;
+        el.style.display = "flex";
+        el.onclick = () => { hideLoading(); window._loadingTimer = null; };
+        document.querySelectorAll("button").forEach(b => b.disabled = true);
+    } catch(e) {}
+}
+function hideLoading() {
+    try {
+        const el = document.getElementById("loadingOverlay");
+        if (el) el.style.display = "none";
+        document.querySelectorAll("button").forEach(b => b.disabled = false);
+    } catch(e) {}
 }
 function hideLoading() {
   document.getElementById("loadingOverlay").style.display = "none";
