@@ -129,13 +129,12 @@ const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 let CURRENT_USER=null, RACK_DATA={}, ITEM_MASTER=[], ACTIVE_AREA="", SELECTED_CODE="", GLOBAL_Q="";
   // ===== LOADING + TOAST =====
 function showLoading(text = "Menyimpan...") {
-    // Timer duluan, biar kalau error di bawah, tetep mati
-    if (!window._loadingTimer) {
-        window._loadingTimer = setTimeout(() => {
-            hideLoading();
-            window._loadingTimer = null;
-        }, 5000);
-    }
+    try {
+        const el = document.getElementById("loadingOverlay");
+        if (el) el.style.display = "none";
+    } catch(e) {}
+    return;
+}
     try {
         const el = document.getElementById("loadingOverlay");
         if (!el) return;
