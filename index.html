@@ -164,13 +164,19 @@ async function loadHistory(){
 }
 async function doIn(){
   if(CURRENT_USER.role==="VIEWER") return alert("Viewer tidak bisa IN/OUT");
-  let code=document.getElementById("fCode").value, qty=parseInt(document.getElementById("fQty").value||"0"), itemCode=document.getElementById("fItem").value;
-  let item=ITEM_MASTER.find(x=>x.item_code===itemCode)||ITEM_MASTER.find(x=>x.item_code_lama===itemCode); if(!item) return alert("Item tidak ada di Master");
-  let {data:slot}=await supabaseClient.from("racks").select("*").eq("code",code).single(); if(!slot) return alert("Kode rak tidak ditemukan");
-  if(slot.jumlah_qty>0 && slot.item_code!==item.item_code) return alert("Rak sudah terisi item lain");
-  await supabaseClient.from("racks").update({jumlah_qty:(slot.jumlah_qty||0)+qty,item_code:item.item_code,item_description:item.item_description,uom:item.uom,item_code_lama:item.item_code_lama,rak_terisi:true,rak_kosong:false,last_update:new Date().toISOString(),updated_by:CURRENT_USER.username}).eq("code",code);
-  await supabaseClient.from("transactions").insert({area:slot.area,rack:slot.rack,code,item_code:item.item_code,qty,type:"IN",username:CURRENT_USER.username});
-  document.getElementById("msg").textContent="Berhasil IN "+qty+" ke "+code;
+  document.getElementById("msg").textContent = "⏳ Memproses IN, tunggu...";
+  const code = document.getElementById("code").value.trim().toUpperCase();
+  const qty = parseInt(document.getElementById("qty").value);
+  if(!code || !qty) return alert("Lengkapi Kode & Jumlah");
+  const {data:rows} = await supabase.from("barang").select("*").eq("kode_barang", code);
+  if(!rows || !rows.length) return alert("Barang tidak ditemukan");
+  const b = rows[0];
+  const ns = (b.stok || 0) + qty;
+  const {error} = await supabase.from("barang").update({stok:ns}).eq("kode_barang", code);
+  if(error) return alert("Gagal IN: " + error.message);
+  await supabase.from("history").insert([{kode_barang:code, nama_barang:b.nama_barang, tipe:"IN", jumlah:qty, stok_awal:b.stok, stok_akhir:ns, oleh:CURRENT_USER.username}]);
+  loadAllData();
+  document.getElementById("msg").textContent = "Berhasil IN " + qty + " ke " + code;
 }
 async function doOut(){
   if(CURRENT_USER.role==="VIEWER") return alert("Viewer tidak bisa IN/OUT");
