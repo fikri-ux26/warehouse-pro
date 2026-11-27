@@ -102,6 +102,10 @@ table{width:100%;border-collapse:collapse;font-size:13px} th,td{padding:10px;bor
         <div class="row"><div class="col"><label>AREA</label><select id="fArea"></select></div><div class="col"><label>RACK</label><select id="fRack"></select></div><div class="col"><label>KODE RAK</label><select id="fCode"></select></div><div class="col"><label>QTY</label><input id="fQty" type="number" value="1" min="1"></div></div>
         <div class="row" style="margin-top:12px"><div class="col"><label>ITEM CODE</label><input id="fItem" list="itemList" placeholder="PLA-000001"><datalist id="itemList"></datalist></div><div class="col"><label>ITEM DESCRIPTION</label><input id="fDesc" readonly></div><div class="col"><label>UOM</label><input id="fUom" readonly></div><div class="col"><label>ITEM CODE LAMA</label><input id="fLama" readonly></div></div>
         <div class="row" style="margin-top:14px"><button class="btn-in" id="btnIn" onclick="doIn()">+ STOCK IN</button><button class="btn-out" id="btnOut" onclick="doOut()">- STOCK OUT</button><span id="msg"></span></div>
+        <div style="margin-top:14px;border-top:1px solid #eee;padding-top:12px">
+  <div id="rackItemsBox"><p style="color:#888;font-size:13px">Klik rak dulu untuk liat item di dalamnya</p></div>
+  <button class="btn-in" onclick="tambahItemKeRak()" style="margin-top:10px;background:#2563eb">+ TAMBAH ITEM LAIN KE RAK INI</button>
+</div>
       </div>
       <div class="panel">
         <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px"><button class="filter-btn on" id="btnAll" onclick="setAreaFilter('')">Semua</button><button class="filter-btn" id="btnRM1" onclick="setAreaFilter('RAW MATERIAL')">RAW MATERIAL (1.777)</button><button class="filter-btn" id="btnSmall" onclick="setAreaFilter('SMALL RACK')">SMALL RACK (42)</button><button class="filter-btn" id="btnRM2" onclick="setAreaFilter('RAW MATERIAL (2)')">RAW MATERIAL (2) (1.185)</button></div>
