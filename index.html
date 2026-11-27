@@ -135,17 +135,7 @@ function showLoading(text = "Menyimpan...") {
     } catch(e) {}
     return;
 }
-    try {
-        const el = document.getElementById("loadingOverlay");
-        if (!el) return;
-        const label = el.querySelector("div:nth-child(2)");
-        if (label) label.textContent = text;
-        el.style.display = "flex";
-        el.onclick = () => { hideLoading(); window._loadingTimer = null; };
-        document.querySelectorAll("button").forEach(b => b.disabled = true);
-    } catch(e) {}
-}
-function hideLoading() {
+    
     try {
         const el = document.getElementById("loadingOverlay");
         if (el) el.style.display = "none";
