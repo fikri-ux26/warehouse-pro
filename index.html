@@ -135,13 +135,7 @@ function showLoading(text = "Menyimpan...") {
     } catch(e) {}
     return;
 }
-    
-    try {
-        const el = document.getElementById("loadingOverlay");
-        if (el) el.style.display = "none";
-        document.querySelectorAll("button").forEach(b => b.disabled = false);
-    } catch(e) {}
-}
+  
 function hideLoading() {
   document.getElementById("loadingOverlay").style.display = "none";
   document.querySelectorAll("button").forEach(b => b.disabled = false);
@@ -195,18 +189,16 @@ async function loadHistory(){
 }
 async function doIn(){
   if(CURRENT_USER.role==="VIEWER") return alert("Viewer tidak bisa IN/OUT");
-document.getElementById("loadingOverlay").style.display = "flex";
-document.getElementById("msg").textContent = "⏳ Memproses IN, tunggu...";
-  const code = document.getElementById("code").value.trim().toUpperCase();
-  const qty = parseInt(document.getElementById("qty").value);
-if(!code || !qty){ document.getElementById("loadingOverlay").style.display = "none"; return alert("Lengkapi Kode & Jumlah"); }  const {data:rows} = await supabase.from("barang").select("*").eq("kode_barang", code);
-if(!rows || !rows.length){ document.getElementById("loadingOverlay").style.display = "none"; return alert("Barang tidak ditemukan"); }  const b = rows[0];
-  const ns = (b.stok || 0) + qty;
-  const {error} = await supabase.from("barang").update({stok:ns}).eq("kode_barang", code);
-if(error){ document.getElementById("loadingOverlay").style.display = "none"; return alert("Gagal IN: " + error.message); }  await supabase.from("history").insert([{kode_barang:code, nama_barang:b.nama_barang, tipe:"IN", jumlah:qty, stok_awal:b.stok, stok_akhir:ns, oleh:CURRENT_USER.username}]);
+  let code=document.getElementById("fCode").value, qty=parseInt(document.getElementById("fQty").value||"0");
+  let itemCode=document.getElementById("fItem").value.trim().toUpperCase();
+  if(!code || !qty) return alert("Lengkapi Kode & Qty");
+  let {data:slot}=await supabaseClient.from("racks").select("*").eq("code",code).single();
+  if(!slot) return alert("Kode rak tidak ditemukan");
+  let nq=(slot.jumlah_qty||0)+qty;
+  await supabaseClient.from("racks").update({jumlah_qty:nq,rak_terisi:true,rak_kosong:false,item_code:itemCode||slot.item_code,item_description:document.getElementById("fDesc").value,uom:document.getElementById("fUom").value,item_code_lama:document.getElementById("fLama").value,last_update:new Date().toISOString(),updated_by:CURRENT_USER.username}).eq("code",code);
+  await supabaseClient.from("transactions").insert({area:slot.area,rack:slot.rack,code,item_code:itemCode||slot.item_code,qty,type:"IN",username:CURRENT_USER.username});
+  document.getElementById("msg").textContent="Berhasil IN "+qty+" ke "+code;
   loadAllData();
-  document.getElementById("msg").textContent = "Berhasil IN " + qty + " ke " + code;
-document.getElementById("loadingOverlay").style.display = "none";
 }
 async function doOut(){
   if(CURRENT_USER.role==="VIEWER") return alert("Viewer tidak bisa IN/OUT");
@@ -283,12 +275,7 @@ function doExport(){
   let blob=new Blob([h+"\n"+rows.join("\n")],{type:"text/csv"}); let a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download="warehouse_grid.csv"; a.click();
 }
 setInterval(()=>{ let c=document.getElementById("clock"); if(c) c.textContent=new Date().toLocaleString("id-ID"); },1000);
-</script> <!-- LOADING OVERLAY -->
-<div id="loadingOverlay" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:9999; align-items:center; justify-content:center; flex-direction:column; gap:12px;">
-  <div style="width:50px; height:50px; border:5px solid #fff; border-top:5px solid #f97316; border-radius:50%; animation:spin 0.8s linear infinite;"></div>
-  <div style="color:white; font-weight:600; font-size:16px;">Menyimpan...</div>
-  <div style="color:#ddd; font-size:13px;">Jangan tutup halaman ini</div>
-</div>
+
 <style>
 @keyframes spin { to { transform: rotate(360deg); } }
  @media (max-width: 768px){
