@@ -215,12 +215,13 @@ async function doIn(){
   const { data, error } = await supabaseClient.from('rack_items').select('*').eq('rack_id', rackId).order('created_at');
   if(error){ box.innerHTML = '<p style="color:red;font-size:13px">'+error.message+'</p>'; return; }
   if(!data || data.length===0){ box.innerHTML = '<p style="color:#888;font-size:13px">Rak ini masih kosong</p>'; return; }
-  box.innerHTML = '<b style="font-size:13px">Item di rak ini:</b>' + data.map(d=>`
-    <div style="display:flex;justify-content:space-between;border:1px solid #eee;padding:8px;border-radius:8px;margin-top:6px;font-size:13px">
-      <span>${d.item_code} - <b>${d.qty}</b></span>
-      <button onclick="hapusItemRak('${d.id}','${rackId}')" style="border:none;background:none;color:red;cursor:pointer">Hapus</button>
-    </div>`).join('');
-}
+box.innerHTML = '<div style="display:flex;justify-content:space-between;align-items:center"><b style="font-size:13px">Item di rak ini:</b><button onclick="tambahItemKeRak()" style="background:#16a34a;color:#fff;border:none;padding:4px 10px;border-radius:20px;cursor:pointer;font-weight:bold">+ Tambah</button></div>' + data.map(d=>
+  '<div style="display:flex;justify-content:space-between;align-items:center;border:1px solid #eee;padding:8px;border-radius:8px;margin-top:6px">'+
+  '<span>'+d.item_code+' - <b>QTY: '+d.qty+'</b></span>'+
+  '<span><button onclick="ubahQtyItem(\''+d.id+'\',\''+rackId+'\',\''+d.qty+'\',-1)" style="border:1px solid #ddd;padding:2px 8px;border-radius:6px;cursor:pointer">-</button> '+
+  '<button onclick="ubahQtyItem(\''+d.id+'\',\''+rackId+'\',\''+d.qty+'\',1)" style="border:1px solid #ddd;padding:2px 8px;border-radius:6px;cursor:pointer">+</button> '+
+  '<button onclick="hapusItemRak(\''+d.id+'\',\''+rackId+'\')" style="border:none;background:none;color:red;cursor:pointer">x</button></span>'+
+  '</div>').join('');}
 
 async function tambahItemKeRak(){
   if(!selectedRack){ alert('Klik rak dulu'); return; }
@@ -230,6 +231,17 @@ async function tambahItemKeRak(){
   const { error } = await supabaseClient.from('rack_items').insert([{ rack_id: selectedRack, item_code: code, qty: qty }]);
   if(error){ alert(error.message); return; }
   loadRackItems(selectedRack);
+}
+  async function ubahQtyItem(id, rackId, qtyLama, tambah){
+  const qtyBaru = parseInt(qtyLama) + tambah;
+  if(qtyBaru < 0) return;
+  if(qtyBaru === 0){
+    if(!confirm('QTY jadi 0, hapus item ini?')) return;
+    await supabaseClient.from('rack_items').delete().eq('id', id);
+  } else {
+    await supabaseClient.from('rack_items').update({ qty: qtyBaru }).eq('id', id);
+  }
+  loadRackItems(rackId);
 }
 
 async function hapusItemRak(id, rackId){
