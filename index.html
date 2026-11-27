@@ -133,9 +133,13 @@ function showLoading(text = "Menyimpan...") {
     el.querySelector("div:nth-child(2)").textContent = text;
     el.style.display = "flex";
     document.querySelectorAll("button").forEach(b => b.disabled = true);
-    // PENGAMAN: paksa hilang setelah 5 detik biar ga nyangkut
-    clearTimeout(window._loadingTimer);
-    window._loadingTimer = setTimeout(() => { hideLoading(); }, 5000);
+    if (!window._loadingTimer) {
+        window._loadingTimer = setTimeout(() => {
+            hideLoading();
+            window._loadingTimer = null;
+        }, 5000);
+    }
+    el.onclick = () => { hideLoading(); window._loadingTimer = null; };
 }
 function hideLoading() {
   document.getElementById("loadingOverlay").style.display = "none";
