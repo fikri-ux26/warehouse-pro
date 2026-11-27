@@ -129,10 +129,13 @@ const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 let CURRENT_USER=null, RACK_DATA={}, ITEM_MASTER=[], ACTIVE_AREA="", SELECTED_CODE="", GLOBAL_Q="";
   // ===== LOADING + TOAST =====
 function showLoading(text = "Menyimpan...") {
-  const el = document.getElementById("loadingOverlay");
-  el.querySelector("div:nth-child(2)").textContent = text;
-  el.style.display = "flex";
-  document.querySelectorAll("button").forEach(b => b.disabled = true);
+    const el = document.getElementById("loadingOverlay");
+    el.querySelector("div:nth-child(2)").textContent = text;
+    el.style.display = "flex";
+    document.querySelectorAll("button").forEach(b => b.disabled = true);
+    // PENGAMAN: paksa hilang setelah 5 detik biar ga nyangkut
+    clearTimeout(window._loadingTimer);
+    window._loadingTimer = setTimeout(() => { hideLoading(); }, 5000);
 }
 function hideLoading() {
   document.getElementById("loadingOverlay").style.display = "none";
