@@ -187,29 +187,29 @@ async function loadHistory(){
 }
 async function doIn(){
   if(CURRENT_USER.role==="VIEWER") return alert("Viewer tidak bisa IN/OUT");
-  document.getElementById("msg").textContent = "⏳ Memproses IN, tunggu...";
+document.getElementById("loadingOverlay").style.display = "flex";
+document.getElementById("msg").textContent = "⏳ Memproses IN, tunggu...";
   const code = document.getElementById("code").value.trim().toUpperCase();
   const qty = parseInt(document.getElementById("qty").value);
-  if(!code || !qty) return alert("Lengkapi Kode & Jumlah");
-  const {data:rows} = await supabase.from("barang").select("*").eq("kode_barang", code);
-  if(!rows || !rows.length) return alert("Barang tidak ditemukan");
-  const b = rows[0];
+if(!code || !qty){ document.getElementById("loadingOverlay").style.display = "none"; return alert("Lengkapi Kode & Jumlah"); }  const {data:rows} = await supabase.from("barang").select("*").eq("kode_barang", code);
+if(!rows || !rows.length){ document.getElementById("loadingOverlay").style.display = "none"; return alert("Barang tidak ditemukan"); }  const b = rows[0];
   const ns = (b.stok || 0) + qty;
   const {error} = await supabase.from("barang").update({stok:ns}).eq("kode_barang", code);
-  if(error) return alert("Gagal IN: " + error.message);
-  await supabase.from("history").insert([{kode_barang:code, nama_barang:b.nama_barang, tipe:"IN", jumlah:qty, stok_awal:b.stok, stok_akhir:ns, oleh:CURRENT_USER.username}]);
+if(error){ document.getElementById("loadingOverlay").style.display = "none"; return alert("Gagal IN: " + error.message); }  await supabase.from("history").insert([{kode_barang:code, nama_barang:b.nama_barang, tipe:"IN", jumlah:qty, stok_awal:b.stok, stok_akhir:ns, oleh:CURRENT_USER.username}]);
   loadAllData();
   document.getElementById("msg").textContent = "Berhasil IN " + qty + " ke " + code;
+document.getElementById("loadingOverlay").style.display = "none";
 }
 async function doOut(){
   if(CURRENT_USER.role==="VIEWER") return alert("Viewer tidak bisa IN/OUT");
+  document.getElementById("loadingOverlay").style.display = "flex";
   let code=document.getElementById("fCode").value, qty=parseInt(document.getElementById("fQty").value||"0");
-  let {data:slot}=await supabaseClient.from("racks").select("*").eq("code",code).single(); if(!slot) return alert("Kode rak tidak ditemukan");
-  if((slot.jumlah_qty||0)<qty) return alert("Stok hanya "+slot.jumlah_qty);
+let {data:slot}=await supabaseClient.from("racks").select("*").eq("code",code).single(); if(!slot){ document.getElementById("loadingOverlay").style.display = "none"; return alert("Kode rak tidak ditemukan"); }  if((slot.jumlah_qty||0)<qty){ document.getElementById("loadingOverlay").style.display = "none"; return alert("Stok hanya "+slot.jumlah_qty); }
   let nq=slot.jumlah_qty-qty;
   await supabaseClient.from("racks").update({jumlah_qty:nq,rak_terisi:nq>0,rak_kosong:nq===0,item_code:nq===0?"":slot.item_code,item_description:nq===0?"":slot.item_description,uom:nq===0?"":slot.uom,item_code_lama:nq===0?"":slot.item_code_lama,last_update:new Date().toISOString(),updated_by:CURRENT_USER.username}).eq("code",code);
   await supabaseClient.from("transactions").insert({area:slot.area,rack:slot.rack,code,item_code:slot.item_code,qty,type:"OUT",username:CURRENT_USER.username});
   document.getElementById("msg").textContent="Berhasil OUT "+qty+" dari "+code;
+  document.getElementById("loadingOverlay").style.display = "none";
 }
 function getAllSlots(){let a=[]; for(let x in RACK_DATA) for(let r in RACK_DATA[x]) RACK_DATA[x][r].forEach(v=>a.push(v)); return a;}
 function initDropdowns(){
