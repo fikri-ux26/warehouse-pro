@@ -41,6 +41,29 @@ table{width:100%;border-collapse:collapse;font-size:13px} th,td{padding:10px;bor
 </style>
 </head>
 <body>
+  <div id="loadingOverlay">
+  <div class="spinner"></div>
+  <div style="color:white;margin-top:10px;">Memproses...</div>
+</div>
+<style>
+#loadingOverlay{
+  display:none;
+  position:fixed; top:0; left:0; right:0; bottom:0;
+  background:rgba(0,0,0,0.5);
+  z-index:9999;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+}
+.spinner{
+  width:50px; height:50px;
+  border:5px solid #ddd;
+  border-top:5px solid #25D366;
+  border-radius:50%;
+  animation:putar 0.8s linear infinite;
+}
+@keyframes putar{ to{ transform:rotate(360deg); } }
+</style>
 <div id="loginPage" class="login-bg"><div class="login-card"><h1>Warehouse Pro</h1><p style="color:#64748b;font-size:13px">Login dulu ya</p><label>USERNAME</label><input id="lgUser" placeholder="username"><label>PASSWORD</label><input id="lgPass" type="password" placeholder="password" onkeydown="if(event.key==='Enter') doLogin()"><div id="lgErr" class="err-box"></div><button class="btn" onclick="doLogin()">Masuk Dashboard</button></div></div>
 
 <div id="dashPage" style="display:none">
