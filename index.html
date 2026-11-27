@@ -209,6 +209,35 @@ async function doIn(){
   document.getElementById("msg").textContent="Berhasil IN "+qty+" ke "+code;
   loadAllData();
 }
+  async function loadRackItems(rackId){
+  const box = document.getElementById('rackItemsBox');
+  if(!box) return;
+  box.innerHTML = '<p style="color:#888;font-size:13px">Loading...</p>';
+  const { data, error } = await supabaseClient.from('rack_items').select('*').eq('rack_id', rackId).order('created_at');
+  if(error){ box.innerHTML = '<p style="color:red;font-size:13px">'+error.message+'</p>'; return; }
+  if(!data || data.length===0){ box.innerHTML = '<p style="color:#888;font-size:13px">Rak ini masih kosong</p>'; return; }
+  box.innerHTML = '<b style="font-size:13px">Item di rak ini:</b>' + data.map(d=>`
+    <div style="display:flex;justify-content:space-between;border:1px solid #eee;padding:8px;border-radius:8px;margin-top:6px;font-size:13px">
+      <span>${d.item_code} - <b>${d.qty}</b></span>
+      <button onclick="hapusItemRak('${d.id}','${rackId}')" style="border:none;background:none;color:red;cursor:pointer">Hapus</button>
+    </div>`).join('');
+}
+
+async function tambahItemKeRak(){
+  if(!selectedRack){ alert('Klik rak dulu'); return; }
+  const code = prompt('Kode Item (misal: BRG-001)');
+  if(!code) return;
+  const qty = parseInt(prompt('Qty mau ditambah berapa?', '1') || '1');
+  const { error } = await supabaseClient.from('rack_items').insert([{ rack_id: selectedRack, item_code: code, qty: qty }]);
+  if(error){ alert(error.message); return; }
+  loadRackItems(selectedRack);
+}
+
+async function hapusItemRak(id, rackId){
+  if(!confirm('Hapus item ini?')) return;
+  await supabaseClient.from('rack_items').delete().eq('id', id);
+  loadRackItems(rackId);
+}
 async function doOut(){
   if(CURRENT_USER.role==="VIEWER") return alert("Viewer tidak bisa IN/OUT");
   document.getElementById("loadingOverlay").style.display = "flex";
