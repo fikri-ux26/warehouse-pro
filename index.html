@@ -280,7 +280,9 @@ function doExport(){
   let blob=new Blob([h+"\n"+rows.join("\n")],{type:"text/csv"}); let a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download="warehouse_grid.csv"; a.click();
 }
 setInterval(()=>{ let c=document.getElementById("clock"); if(c) c.textContent=new Date().toLocaleString("id-ID"); },1000);
+</script>
 
+<style>
 <style>
 @keyframes spin { to { transform: rotate(360deg); } }
  @media (max-width: 768px){
