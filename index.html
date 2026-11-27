@@ -283,6 +283,12 @@ setInterval(()=>{ let c=document.getElementById("clock"); if(c) c.textContent=ne
 </div>
 <style>
 @keyframes spin { to { transform: rotate(360deg); } }
+  @media (max-width: 768px){
+  body{ padding: 10px !important; }
+  div[style*="display:flex"]{ flex-wrap: wrap !important; }
+  table{ display: block !important; overflow-x: auto !important; white-space: nowrap !important; }
+  input, select, button{ font-size: 14px !important; }
+}
 </style>
 <div id="toast" style="display:none; position:fixed; bottom:20px; left:50%; transform:translateX(-50%); background:#16a34a; color:white; padding:12px 20px; border-radius:10px; font-weight:600; z-index:10000;"></div>
 </body>
