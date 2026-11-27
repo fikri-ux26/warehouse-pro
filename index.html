@@ -236,11 +236,37 @@ function onRackChange(){
   document.getElementById("infoQty").textContent=list.reduce((s,x)=>s+(x.jumlah_qty||0),0);
 }
 function setAreaFilter(a){ ACTIVE_AREA=a; ["btnAll","btnRM1","btnSmall","btnRM2"].forEach(id=> document.getElementById(id).classList.remove("on")); document.getElementById(a===""?"btnAll":a==="RAW MATERIAL"?"btnRM1":a==="SMALL RACK"?"btnSmall":"btnRM2").classList.add("on"); render(); }
-function selectSlot(code,area,rack){
+async function selectSlot(code,area,rack){
   SELECTED_CODE=code; document.getElementById("fArea").value=area;
   let fR=document.getElementById("fRack"); for(let i=0;i<fR.options.length;i++){ if(fR.options[i].value===rack && fR.options[i].getAttribute("data-area")===area){ fR.selectedIndex=i; break; } }
   onRackChange(); document.getElementById("fCode").value=code; onRackChange(); showPage("dash"); render();
   document.querySelector(".panel").scrollIntoView({behavior:"smooth"});
+  await loadRackItems(code);
+}
+
+async function loadRackItems(code){
+  let {data}=await supabaseClient.from("rack_items").select("*").eq("code",code).order("id");
+  let box=document.getElementById("rackItemsBox");
+  if(!box) return;
+  if(!data || data.length===0){ box.innerHTML=`<p style="color:#888;font-size:13px">Belum ada item tambahan di ${code}</p>`; return; }
+  box.innerHTML=`<b style="font-size:13px">Item di ${code} (${data.length}):</b><br>` + data.map(x=>`<div style="display:flex;justify-content:space-between;background:#f8fafc;padding:8px;border-radius:8px;margin-top:6px;font-size:13px"><span><b>${x.item_code}</b> - ${x.item_description||""} (${x.uom||""})</span><span><b>Qty ${x.qty}</b> <button onclick="hapusRackItem(${x.id},'${code}')" style="color:red;border:0;background:none;cursor:pointer">✕</button></span></div>`).join("");
+}
+
+async function tambahItemKeRak(){
+  let code=document.getElementById("fCode").value;
+  let itemCode=document.getElementById("fItem").value.trim().toUpperCase();
+  let qty=parseInt(document.getElementById("fQty").value||"0");
+  if(!code) return alert("Klik dulu raknya");
+  if(!itemCode) return alert("Isi Item Code dulu");
+  await supabaseClient.from("rack_items").insert({code, item_code:itemCode, item_description:document.getElementById("fDesc").value, uom:document.getElementById("fUom").value, qty});
+  await loadRackItems(code); loadAllData();
+  document.getElementById("msg").textContent="Item "+itemCode+" ditambah ke "+code;
+}
+
+async function hapusRackItem(id,code){
+  if(!confirm("Hapus item ini dari rak?")) return;
+  await supabaseClient.from("rack_items").delete().eq("id",id);
+  await loadRackItems(code); loadAllData();
 }
 function render(){
   let all=getAllSlots();
