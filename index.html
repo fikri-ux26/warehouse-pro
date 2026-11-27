@@ -104,6 +104,24 @@ const SUPABASE_URL = "https://scubdphdxcwwhtimchoq.supabase.co";
 const SUPABASE_KEY = "sb_publishable_ep7431Nv5EwHUpxCswGlXw_Hb2IhIA2";
 const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 let CURRENT_USER=null, RACK_DATA={}, ITEM_MASTER=[], ACTIVE_AREA="", SELECTED_CODE="", GLOBAL_Q="";
+  // ===== LOADING + TOAST =====
+function showLoading(text = "Menyimpan...") {
+  const el = document.getElementById("loadingOverlay");
+  el.querySelector("div:nth-child(2)").textContent = text;
+  el.style.display = "flex";
+  document.querySelectorAll("button").forEach(b => b.disabled = true);
+}
+function hideLoading() {
+  document.getElementById("loadingOverlay").style.display = "none";
+  document.querySelectorAll("button").forEach(b => b.disabled = false);
+}
+function showToast(pesan, sukses = true) {
+  const t = document.getElementById("toast");
+  t.textContent = pesan;
+  t.style.background = sukses ? "#16a34a" : "#dc2626";
+  t.style.display = "block";
+  setTimeout(() => t.style.display = "none", 3000);
+}
 
 async function doLogin(){
   let username=document.getElementById("lgUser").value.trim().toLowerCase();
