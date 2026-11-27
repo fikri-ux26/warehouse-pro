@@ -228,6 +228,15 @@ function doExport(){
   let blob=new Blob([h+"\n"+rows.join("\n")],{type:"text/csv"}); let a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download="warehouse_grid.csv"; a.click();
 }
 setInterval(()=>{ let c=document.getElementById("clock"); if(c) c.textContent=new Date().toLocaleString("id-ID"); },1000);
-</script>
+</script> <!-- LOADING OVERLAY -->
+<div id="loadingOverlay" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:9999; align-items:center; justify-content:center; flex-direction:column; gap:12px;">
+  <div style="width:50px; height:50px; border:5px solid #fff; border-top:5px solid #f97316; border-radius:50%; animation:spin 0.8s linear infinite;"></div>
+  <div style="color:white; font-weight:600; font-size:16px;">Menyimpan...</div>
+  <div style="color:#ddd; font-size:13px;">Jangan tutup halaman ini</div>
+</div>
+<style>
+@keyframes spin { to { transform: rotate(360deg); } }
+</style>
+<div id="toast" style="display:none; position:fixed; bottom:20px; left:50%; transform:translateX(-50%); background:#16a34a; color:white; padding:12px 20px; border-radius:10px; font-weight:600; z-index:10000;"></div>
 </body>
 </html>
