@@ -199,14 +199,21 @@ async function doIn(){
   if(CURRENT_USER.role==="VIEWER") return alert("Viewer tidak bisa IN/OUT");
   let code=document.getElementById("fCode").value, qty=parseInt(document.getElementById("fQty").value||"0");
   let itemCode=document.getElementById("fItem").value.trim().toUpperCase();
-  if(!code || !qty) return alert("Lengkapi Kode & Qty");
+  if(!code || !qty || !itemCode) return alert("Lengkapi Kode, Item & Qty");
   let {data:slot}=await supabaseClient.from("racks").select("*").eq("code",code).single();
   if(!slot) return alert("Kode rak tidak ditemukan");
-  let nq=(slot.jumlah_qty||0)+qty;
-  await supabaseClient.from("racks").update({jumlah_qty:nq,rak_terisi:true,rak_kosong:false,item_code:itemCode||slot.item_code,item_description:document.getElementById("fDesc").value,uom:document.getElementById("fUom").value,item_code_lama:document.getElementById("fLama").value,last_update:new Date().toISOString(),updated_by:CURRENT_USER.username}).eq("code",code);
-  await supabaseClient.from("transactions").insert({area:slot.area,rack:slot.rack,code,item_code:itemCode||slot.item_code,qty,type:"IN",username:CURRENT_USER.username});
-  document.getElementById("msg").textContent="Berhasil IN "+qty+" ke "+code;
-  loadAllData();
+  let {data:ada}=await supabaseClient.from("rack_items").select("*").eq("code",code).eq("item_code",itemCode).maybeSingle();
+  if(ada){
+    await supabaseClient.from("rack_items").update({qty:(ada.qty||0)+qty}).eq("id",ada.id);
+  } else {
+    await supabaseClient.from("rack_items").insert({code, item_code:itemCode, item_description:document.getElementById("fDesc").value, uom:document.getElementById("fUom").value, qty});
+  }
+  let {data:allItems}=await supabaseClient.from("rack_items").select("qty").eq("code",code);
+  let total=(allItems||[]).reduce((s,x)=>s+(x.qty||0),0);
+  await supabaseClient.from("racks").update({jumlah_qty:total,rak_terisi:true,rak_kosong:false,last_update:new Date().toISOString(),updated_by:CURRENT_USER.username}).eq("code",code);
+  await supabaseClient.from("transactions").insert({area:slot.area,rack:slot.rack,code,item_code:itemCode,qty,type:"IN",username:CURRENT_USER.username});
+  document.getElementById("msg").textContent="Berhasil IN "+qty+" "+itemCode+" ke "+code;
+  loadAllData(); loadRackItems(code);
 }
 
 async function loadRackItems(code){
