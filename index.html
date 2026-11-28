@@ -5,6 +5,7 @@
 <title>Warehouse Pro - Sidebar GRID</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/bcryptjs@2.4.3/dist/bcrypt.min.js"></script>
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
 <style>
 *{box-sizing:border-box}
 body{margin:0;font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:#F1F5F9;color:#1E293B;font-size:13px}
@@ -413,27 +414,38 @@ async function renderSearch(){
 }
 function doExport(){
   let all = getAllSlots().sort((a,b)=>(a.area+a.rack+a.code).localeCompare(b.area+b.rack+b.code));
-  let csv = "WAREHOUSE PRO - REKAP RAK\n";
-  csv += "Tanggal Export," + new Date().toLocaleString("id-ID") + "\n\n";
-  csv += "NO,AREA,RACK,KODE RAK,STATUS,JUMLAH QTY,TERISI,KOSONG,LAST UPDATE,UPDATED BY\n";
-  all.forEach((x,i)=>{
-    let status = x.rak_terisi ? "TERISI" : "KOSONG";
-    csv += `${i+1},"${x.area}","${x.rack}","${x.code}","${status}",${x.jumlah_qty||0},"${x.rak_terisi?"YA":""}","${x.rak_kosong?"YA":""}","${x.last_update?new Date(x.last_update).toLocaleString("id-ID"):""}","${x.updated_by||""}"\n`;
-  });
-  csv += "\n\nDETAIL ISI RAK\n";
-  csv += "NO,KODE RAK,AREA,RACK,ITEM CODE,ITEM DESCRIPTION,UOM,QTY\n";
-  let no2 = 1;
+  // Sheet 1 - Rekap Rak
+  let data1 = all.map((x,i)=>({
+    "NO": i+1,
+    "AREA": x.area,
+    "RACK": x.rack,
+    "KODE RAK": x.code,
+    "STATUS": x.rak_terisi ? "TERISI" : "KOSONG",
+    "JUMLAH QTY": x.jumlah_qty||0,
+    "TERISI": x.rak_terisi ? "YA" : "",
+    "KOSONG": x.rak_kosong ? "YA" : "",
+    "LAST UPDATE": x.last_update ? new Date(x.last_update).toLocaleString("id-ID") : "",
+    "UPDATED BY": x.updated_by||""
+  }));
+  let ws1 = XLSX.utils.json_to_sheet(data1);
+  ws1['!cols'] = [{wch:6},{wch:18},{wch:22},{wch:14},{wch:10},{wch:12},{wch:8},{wch:8},{wch:20},{wch:14}];
+
+  // Sheet 2 - Detail Isi Rak
+  let data2 = [];
   all.forEach(x=>{
-    if(x.item_code){
-      let desc = (x.item_description||"").replace(/"/g,'""');
-      csv += `${no2++},"${x.code}","${x.area}","${x.rack}","${x.item_code}","${desc}","${x.uom||""}",${x.jumlah_qty||0}\n`;
-    }
+    if(x.item_code) data2.push({
+      "KODE RAK": x.code, "AREA": x.area, "RACK": x.rack,
+      "ITEM CODE": x.item_code, "ITEM DESCRIPTION": x.item_description||"",
+      "UOM": x.uom||"", "QTY": x.jumlah_qty||0
+    });
   });
-  let blob = new Blob(["\uFEFF"+csv],{type:"text/csv;charset=utf-8;"});
-  let a = document.createElement("a");
-  a.href = URL.createObjectURL(blob);
-  a.download = "Warehouse_Pro_Rapi_"+new Date().toISOString().slice(0,10)+".csv";
-  a.click();
+  let ws2 = XLSX.utils.json_to_sheet(data2.length?data2:[{"KODE RAK":"Belum ada item"}]);
+  ws2['!cols'] = [{wch:14},{wch:18},{wch:22},{wch:16},{wch:40},{wch:10},{wch:10}];
+
+  let wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws1, "Rekap Rak");
+  XLSX.utils.book_append_sheet(wb, ws2, "Detail Isi Rak");
+  XLSX.writeFile(wb, "Warehouse_Pro_Rapi_"+new Date().toISOString().slice(0,10)+".xlsx");
 }
 setInterval(()=>{ let c=document.getElementById("clock"); if(c) c.textContent=new Date().toLocaleString("id-ID"); },1000);
 </script>
