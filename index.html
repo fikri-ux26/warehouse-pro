@@ -107,7 +107,9 @@ table{width:100%;border-collapse:collapse;font-size:13px} th,td{padding:10px;bor
 </div>
       </div>
       <div class="panel">
-        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px"><button class="filter-btn on" id="btnAll" onclick="setAreaFilter('')">Semua</button><button class="filter-btn" id="btnRM1" onclick="setAreaFilter('RAW MATERIAL')">RAW MATERIAL (1.777)</button><button class="filter-btn" id="btnSmall" onclick="setAreaFilter('SMALL RACK')">SMALL RACK (42)</button><button class="filter-btn" id="btnRM2" onclick="setAreaFilter('RAW MATERIAL (2)')">RAW MATERIAL (2) (1.185)</button></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px"><button class="filter-btn on" id="btnAll" onclick="setAreaFilter('')">Semua</button><button class="filter-btn" id="btnRM1" onclick="setAreaFilter('RAW MATERIAL')">RAW MATERIAL (1.777)</button><button class="filter-btn" id="btnSmall" onclick="setAreaFilter('SMALL RACK')">SMALL RACK (42)</button><button class="filter-btn" id="btnRM2" onclick="setAreaFilter('RAW MATERIAL (2)')">RAW MATERIAL (2) (1.185)</button>
+        <button class="filter-btn" id="btnChem" onclick="setAreaFilter('CHEMICAL')">CHEMICAL</button>
+<button class="filter-btn" id="btnCrit" onclick="setAreaFilter('CRITICAL')">CRITICAL</button></div>
         <div id="gridContainer"></div>
         <div id="footCount" style="font-size:12px;color:#888;text-align:center;margin-top:8px"></div>
       </div>
@@ -326,8 +328,7 @@ function onRackChange(){
   document.getElementById("infoKosong").textContent=list.filter(x=>x.rak_kosong).length;
   document.getElementById("infoQty").textContent=list.reduce((s,x)=>s+(x.jumlah_qty||0),0);
 }
-function setAreaFilter(a){ ACTIVE_AREA=a; ["btnAll","btnRM1","btnSmall","btnRM2"].forEach(id=> document.getElementById(id).classList.remove("on")); document.getElementById(a===""?"btnAll":a==="RAW MATERIAL"?"btnRM1":a==="SMALL RACK"?"btnSmall":"btnRM2").classList.add("on"); render(); }
-async function selectSlot(code,area,rack){
+function setAreaFilter(a){ ACTIVE_AREA=a; ["btnAll","btnRM1","btnSmall","btnRM2","btnChem","btnCrit"].forEach(id=> document.getElementById(id).classList.remove("on")); document.getElementById(a===""?"btnAll":a==="RAW MATERIAL"?"btnRM1":a==="SMALL RACK"?"btnSmall":a==="RAW MATERIAL (2)"?"btnRM2":a==="CHEMICAL"?"btnChem":"btnCrit").classList.add("on"); render(); }async function selectSlot(code,area,rack){
   SELECTED_CODE=code; document.getElementById("fArea").value=area;
   let fR=document.getElementById("fRack"); for(let i=0;i<fR.options.length;i++){ if(fR.options[i].value===rack && fR.options[i].getAttribute("data-area")===area){ fR.selectedIndex=i; break; } }
   onRackChange(); document.getElementById("fCode").value=code; onRackChange(); showPage("dash"); render();
@@ -341,7 +342,7 @@ function render(){
   document.getElementById("cTerisi").textContent=all.filter(x=>x.rak_terisi).length;
   document.getElementById("cKosong").textContent=all.filter(x=>x.rak_kosong).length;
   document.getElementById("cQty").textContent=all.reduce((s,x)=>s+(x.jumlah_qty||0),0);
-  let order=["RAW MATERIAL","SMALL RACK","RAW MATERIAL (2)"]; let areas=ACTIVE_AREA?[ACTIVE_AREA]:Object.keys(RACK_DATA); areas.sort((a,b)=>order.indexOf(a)-order.indexOf(b));
+  let order=["RAW MATERIAL","SMALL RACK","RAW MATERIAL (2)","CHEMICAL","CRITICAL"]; let areas=ACTIVE_AREA?[ACTIVE_AREA]:Object.keys(RACK_DATA); areas.sort((a,b)=>order.indexOf(a)-order.indexOf(b));
   let html="", totalShown=0;
   areas.forEach(area=>{
     let racks=Object.keys(RACK_DATA[area]||{}).sort(); let areaSlots=[]; racks.forEach(r=> areaSlots=areaSlots.concat(RACK_DATA[area][r]));
