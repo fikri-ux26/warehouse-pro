@@ -196,7 +196,6 @@ async function loadHistory(){
 }
 
 async function doIn(){
-}
   if(CURRENT_USER.role==="VIEWER") return alert("Viewer tidak bisa IN/OUT");
   let code=document.getElementById("fCode").value, qty=parseInt(document.getElementById("fQty").value||"0");
   let itemCode=document.getElementById("fItem").value.trim().toUpperCase();
