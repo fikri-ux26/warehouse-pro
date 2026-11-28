@@ -133,11 +133,8 @@ const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 let CURRENT_USER=null, RACK_DATA={}, ITEM_MASTER=[], ACTIVE_AREA="", SELECTED_CODE="", GLOBAL_Q="";
   // ===== LOADING + TOAST =====
 function showLoading(text = "Menyimpan...") {
-    try {
-        const el = document.getElementById("loadingOverlay");
-        if (el) el.style.display = "none";
-    } catch(e) {}
-    return;
+    const el = document.getElementById("loadingOverlay");
+    if (el) el.style.display = "flex";
 }
   
 function hideLoading() {
@@ -385,18 +382,6 @@ function doExport(){
 setInterval(()=>{ let c=document.getElementById("clock"); if(c) c.textContent=new Date().toLocaleString("id-ID"); },1000);
 </script>
 
-<style>
-<style>
-@keyframes spin { to { transform: rotate(360deg); } }
- @media (max-width: 768px){
-  body{ display:block !important; padding:0 !important; }
-  body > div{ width:100% !important; max-width:100% !important; display:block !important; }
-  body > div > div{ width:100% !important; max-width:100% !important; }
-  div:has(> a){ display:flex !important; flex-wrap:wrap !important; gap:8px !important; }
-  div:has(> a) a{ flex:1 1 45% !important; padding:10px !important; font-size:13px !important; }
-  table{ display:block !important; overflow-x:auto !important; white-space:nowrap !important; }
-}
-</style>
 <div id="toast" style="display:none; position:fixed; bottom:20px; left:50%; transform:translateX(-50%); background:#16a34a; color:white; padding:12px 20px; border-radius:10px; font-weight:600; z-index:10000;"></div>
 </body>
 </html>
