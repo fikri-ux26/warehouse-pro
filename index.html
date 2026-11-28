@@ -229,15 +229,27 @@ async function loadRackItems(code){
   box.innerHTML = head + data.map(x=>'<div style="display:flex;justify-content:space-between;align-items:center;background:#f8fafc;padding:8px;border-radius:8px;margin-top:6px;font-size:13px"><span><b>'+x.item_code+'</b> - '+(x.item_description||"")+'</span><span><b>Qty '+x.qty+'</b> <button onclick="ubahQtyItem('+x.id+',\''+code+'\','+x.qty+',-1)" style="border:1px solid #ddd;padding:2px 8px;border-radius:6px;cursor:pointer">-</button> <button onclick="ubahQtyItem('+x.id+',\''+code+'\','+x.qty+',1)" style="border:1px solid #ddd;padding:2px 8px;border-radius:6px;cursor:pointer">+</button> <button onclick="hapusRackItem('+x.id+',\''+code+'\')" style="color:red;border:0;background:none;cursor:pointer">✕</button></span></div>').join("");
 }
 
+async function syncRackTotal(code){
+  let {data:allItems}=await supabaseClient.from("rack_items").select("qty").eq("code",code);
+  let total=(allItems||[]).reduce((s,x)=>s+(x.qty||0),0);
+  await supabaseClient.from("racks").update({jumlah_qty:total,rak_terisi:total>0,rak_kosong:total===0,last_update:new Date().toISOString()}).eq("code",code);
+  return total;
+}
+
 async function tambahItemKeRak(){
   let code = SELECTED_CODE || document.getElementById("fCode").value;
   let itemCode = document.getElementById("fItem").value.trim().toUpperCase();
   let qty = parseInt(document.getElementById("fQty").value||"0");
   if(!code) return alert("Klik dulu raknya");
   if(!itemCode) return alert("Isi Item Code dulu di form atas");
-  let {error} = await supabaseClient.from("rack_items").insert({code, item_code:itemCode, item_description:document.getElementById("fDesc").value, uom:document.getElementById("fUom").value, qty});
-  if(error) return alert(error.message);
-  await loadRackItems(code);
+  let {data:ada}=await supabaseClient.from("rack_items").select("*").eq("code",code).eq("item_code",itemCode).maybeSingle();
+  if(ada){
+    await supabaseClient.from("rack_items").update({qty:(ada.qty||0)+qty}).eq("id",ada.id);
+  } else {
+    await supabaseClient.from("rack_items").insert({code, item_code:itemCode, item_description:document.getElementById("fDesc").value, uom:document.getElementById("fUom").value, qty});
+  }
+  await syncRackTotal(code);
+  await loadRackItems(code); loadAllData();
   document.getElementById("msg").textContent = "Item "+itemCode+" ditambah ke "+code;
 }
 
@@ -250,13 +262,15 @@ async function ubahQtyItem(id, code, qtyLama, tambah){
   } else {
     await supabaseClient.from("rack_items").update({qty:qtyBaru}).eq("id",id);
   }
-  await loadRackItems(code);
+  await syncRackTotal(code);
+  await loadRackItems(code); loadAllData();
 }
 
 async function hapusRackItem(id, code){
   if(!confirm("Hapus item ini dari rak?")) return;
   await supabaseClient.from("rack_items").delete().eq("id",id);
-  await loadRackItems(code);
+  await syncRackTotal(code);
+  await loadRackItems(code); loadAllData();
 }
 
 async function doOut(){
@@ -284,7 +298,7 @@ async function doOut(){
   document.getElementById("msg").textContent="Berhasil OUT "+qty+" "+itemCode+" dari "+code;
   loadAllData(); loadRackItems(code);
 }
-}
+
 function getAllSlots(){let a=[]; for(let x in RACK_DATA) for(let r in RACK_DATA[x]) RACK_DATA[x][r].forEach(v=>a.push(v)); return a;}
 function initDropdowns(){
   let fA=document.getElementById("fArea"), fR=document.getElementById("fRack"); fA.innerHTML=""; Object.keys(RACK_DATA).forEach(a=> fA.innerHTML+=`<option>${a}</option>`);
@@ -330,7 +344,8 @@ function render(){
       if(list.length===0) return; totalShown+=list.length;
       let terisi=(RACK_DATA[area][rack]||[]).filter(x=>x.rak_terisi).length;
       racksHtml+=`<div class="rack-col"><div class="rack-head">${rack}<span>${RACK_DATA[area][rack].length} slot • ${terisi} terisi</span></div>`;
-      list.forEach(x=>{ let cls=x.rak_terisi?"terisi":"kosong"; let act=x.code===SELECTED_CODE?" active":""; let det=x.rak_terisi?`<span style="font-size:10px">${x.item_code||""} • Qty ${x.jumlah_qty}</span>`:`<span style="font-size:10px;color:#94a3b8">KOSONG</span>`; racksHtml+=`<div class="slot ${cls}${act}" onclick="selectSlot('${x.code}','${area}','${rack}')"><b>${x.code}</b>${det}</div>`; });
+      list.forEach(x=>{ let cls=x.rak_terisi?"terisi":"kosong"; let act=x.code===SELECTED_CODE?" active":""; // BARU - pisah: kalau 1 jenis, tunjukin namanya. Kalau banyak jenis, tunjukin jumlah jenisnya
+let det=x.rak_terisi?`<span style="font-size:10px">${x.item_code||""} • ${x.jumlah_qty} pcs</span>`:`<span style="font-size:10px;color:#94a3b8">KOSONG</span>`; racksHtml+=`<div class="slot ${cls}${act}" onclick="selectSlot('${x.code}','${area}','${rack}')"><b>${x.code}</b>${det}</div>`; });
       racksHtml+=`</div>`;
     });
     if(!racksHtml) return;
@@ -339,11 +354,17 @@ function render(){
   document.getElementById("gridContainer").innerHTML=html||`<p style="text-align:center;color:#888">Tidak ada hasil</p>`;
   document.getElementById("footCount").textContent=`Total ${all.length} slot • Harusnya 3.004 • RAW MATERIAL 1.777 • SMALL RACK 42 • RAW MATERIAL (2) 1.185`;
 }
-function renderSearch(){
+async function renderSearch(){
   let el=document.getElementById("searchResult"); if(!GLOBAL_Q){ el.innerHTML=`<p style="color:#888">Ketik di search atas untuk cari...</p>`; return; }
-  let all=getAllSlots().filter(x=> x.code.toLowerCase().includes(GLOBAL_Q) || (x.item_code||"").toLowerCase().includes(GLOBAL_Q) || (x.item_description||"").toLowerCase().includes(GLOBAL_Q));
+  let {data:itemsTambahan} = await supabaseClient.from("rack_items").select("*").ilike("item_code","%"+GLOBAL_Q+"%");
+  let kodeDariTambahan = (itemsTambahan||[]).map(x=>x.code);
+  let all=getAllSlots().filter(x=> x.code.toLowerCase().includes(GLOBAL_Q) || (x.item_code||"").toLowerCase().includes(GLOBAL_Q) || (x.item_description||"").toLowerCase().includes(GLOBAL_Q) || kodeDariTambahan.includes(x.code));
   if(all.length===0){ el.innerHTML=`<p>Tidak ketemu "${GLOBAL_Q}"</p>`; return; }
-  el.innerHTML=`<p>Ditemukan ${all.length} hasil untuk "<b>${GLOBAL_Q}</b>"</p><table><thead><tr><th>Kode Rak</th><th>Area / Rack</th><th>Status</th><th>Item</th><th>Qty</th><th>Aksi</th></tr></thead><tbody>`+all.slice(0,50).map(x=>`<tr><td><b>${x.code}</b></td><td>${x.area} / ${x.rack}</td><td>${x.rak_terisi?"TERISI":"KOSONG"}</td><td>${x.item_code||"-"} ${x.item_description||""}</td><td>${x.jumlah_qty||0}</td><td><button onclick="selectSlot('${x.code}','${x.area}','${x.rack}')">Pilih</button></td></tr>`).join("")+`</tbody></table>`;
+  el.innerHTML=`<p>Ditemukan ${all.length} hasil untuk "<b>${GLOBAL_Q}</b>"</p><table><thead><tr><th>Kode Rak</th><th>Area / Rack</th><th>Status</th><th>Isi Rak</th><th>Qty Total</th><th>Aksi</th></tr></thead><tbody>`+all.slice(0,50).map(x=>{
+    let extra = (itemsTambahan||[]).filter(y=>y.code===x.code).map(y=>y.item_code+" ("+y.qty+")").join(", ");
+    let isi = extra ? extra : ((x.item_code||"-")+" - "+(x.item_description||""));
+    return `<tr><td><b>${x.code}</b></td><td>${x.area} / ${x.rack}</td><td>${x.rak_terisi?"TERISI":"KOSONG"}</td><td>${isi}</td><td>${x.jumlah_qty||0}</td><td><button onclick="selectSlot('${x.code}','${x.area}','${x.rack}')">Pilih</button></td></tr>`;
+  }).join("")+`</tbody></table>`;
 }
 function doExport(){
   let h="Area,Rack,Kode Rak,Rak Kosong,Rak Terisi,Jumlah Qty,ITEM CODE,ITEM DESCRIPTION,UOM,ITEM CODE LAMA,Last Update,Updated By";
