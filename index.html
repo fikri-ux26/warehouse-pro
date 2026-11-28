@@ -160,9 +160,14 @@ async function doLogin(){
     if(!u||!p) return showErr("Isi username dan password");
     let {data,error}=await supabaseClient.from("users").select("*").eq("username",u).single();
     if(error||!data) return showErr("Username tidak ditemukan");
-    let ok=false;
-    try{ ok=bcrypt.compareSync(p,data.password_hash); }catch(e){}
+    
+    // FIX: terima password polos ATAU hash bcrypt
+    let ok = (p === data.password_hash);
+    if(!ok){
+      try{ ok=bcrypt.compareSync(p,data.password_hash); }catch(e){}
+    }
     if(!ok) return showErr("Password salah");
+    
     CURRENT_USER={username:data.username,role:(data.role||"VIEWER").toUpperCase()};
     document.getElementById("loginPage").style.display="none";
     document.getElementById("dashPage").style.display="block";
