@@ -153,19 +153,26 @@ function showToast(pesan, sukses = true) {
 }
 
 async function doLogin(){
-  let u=document.getElementById("lgUser").value.trim().toLowerCase();
-  let p=document.getElementById("lgPass").value;
-  if(!u||!p) return showErr("Isi username dan password");
-  let {data,error}=await supabaseClient.from("users").select("*").eq("username",u).single();
-  if(error||!data) return showErr("Username tidak ditemukan");
-    let ok=(p===data.password_hash);
-  if(!ok){ try{ ok=bcrypt.compareSync(p,data.password_hash); }catch(e){} }
-  if(!ok) return showErr("Password salah");
-  CURRENT_USER={username:data.username,role:(data.role||"VIEWER").toUpperCase()};
-  document.getElementById("loginPage").style.display="none";
-  document.getElementById("dashPage").style.display="block";
-  document.getElementById("userPill").textContent=CURRENT_USER.username+" • "+CURRENT_USER.role;
-  await loadAllData(); subscribeRealtime(); loadHistory();
+  showLoading();
+  try{
+    let u=document.getElementById("lgUser").value.trim().toLowerCase();
+    let p=document.getElementById("lgPass").value;
+    if(!u||!p) return showErr("Isi username dan password");
+    let {data,error}=await supabaseClient.from("users").select("*").eq("username",u).single();
+    if(error||!data) return showErr("Username tidak ditemukan");
+    let ok=false;
+    try{ ok=bcrypt.compareSync(p,data.password_hash); }catch(e){}
+    if(!ok) return showErr("Password salah");
+    CURRENT_USER={username:data.username,role:(data.role||"VIEWER").toUpperCase()};
+    document.getElementById("loginPage").style.display="none";
+    document.getElementById("dashPage").style.display="block";
+    document.getElementById("userPill").textContent=CURRENT_USER.username+" • "+CURRENT_USER.role;
+    await loadAllData(); subscribeRealtime(); loadHistory();
+  }catch(e){
+    showErr("Login gagal: "+e.message);
+  }finally{
+    hideLoading();
+  }
 }
 function showErr(m){let e=document.getElementById("lgErr"); e.textContent=m; e.style.display="block";}
 function doLogout(){ CURRENT_USER=null; document.getElementById("dashPage").style.display="none"; document.getElementById("loginPage").style.display="flex"; }
