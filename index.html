@@ -216,11 +216,29 @@ async function loadRackItems(code){
   let box = document.getElementById("rackItemsBox");
   if(!box) return;
   box.innerHTML = '<p style="color:#888;font-size:13px">Loading...</p>';
-  let {data, error} = await supabaseClient.from("rack_items").select("*").eq("code",code).order("id");
-  if(error){ box.innerHTML = '<p style="color:red;font-size:13px">'+error.message+'</p>'; return; }
-  let head = '<div style="display:flex;justify-content:space-between;align-items:center"><b style="font-size:13px">Item di '+code+' ('+(data?data.length:0)+'):</b><button onclick="tambahItemKeRak()" style="background:#16a34a;color:#fff;border:none;padding:6px 12px;border-radius:20px;cursor:pointer;font-weight:bold">+ Tambah</button></div>';
-  if(!data || data.length===0){ box.innerHTML = head + '<p style="color:#888;font-size:13px">Belum ada item tambahan di '+code+'</p>'; return; }
-  box.innerHTML = head + data.map(x=>'<div style="display:flex;justify-content:space-between;align-items:center;background:#f8fafc;padding:8px;border-radius:8px;margin-top:6px;font-size:13px"><span><b>'+x.item_code+'</b> - '+(x.item_description||"")+'</span><span><b>Qty '+x.qty+'</b> <button onclick="ubahQtyItem('+x.id+',\''+code+'\','+x.qty+',-1)" style="border:1px solid #ddd;padding:2px 8px;border-radius:6px;cursor:pointer">-</button> <button onclick="ubahQtyItem('+x.id+',\''+code+'\','+x.qty+',1)" style="border:1px solid #ddd;padding:2px 8px;border-radius:6px;cursor:pointer">+</button> <button onclick="hapusRackItem('+x.id+',\''+code+'\')" style="color:red;border:0;background:none;cursor:pointer">✕</button></span></div>').join("");
+
+  // 1. Ambil barang UTAMA dari tabel racks
+  let {data:slot} = await supabaseClient.from("racks").select("*").eq("code",code).single();
+  // 2. Ambil barang TAMBAHAN dari tabel rack_items
+  let {data} = await supabaseClient.from("rack_items").select("*").eq("code",code).order("id");
+
+  let head = '<div style="display:flex;justify-content:space-between;align-items:center"><b style="font-size:14px">Isi '+code+':</b><button onclick="tambahItemKeRak()" style="background:#16a34a;color:#fff;border:none;padding:6px 12px;border-radius:20px;cursor:pointer;font-weight:bold">+ Tambah</button></div>';
+
+  let utama = '';
+  if(slot && slot.rak_terisi){
+    utama = '<div style="background:#dcfce7;border:1px solid #16a34a;padding:10px;border-radius:8px;margin-top:8px;font-size:13px"><b>BARANG UTAMA:</b><br><b>'+(slot.item_code||"-")+'</b> - '+(slot.item_description||"")+'<br>Qty: <b>'+(slot.jumlah_qty||0)+'</b> '+(slot.uom||"")+' | Kode Lama: '+(slot.item_code_lama||"-")+'</div>';
+  } else {
+    utama = '<div style="background:#f8fafc;padding:10px;border-radius:8px;margin-top:8px;font-size:13px">Rak ini <b>KOSONG</b> (barang utama belum ada)</div>';
+  }
+
+  let tambahan = '';
+  if(!data || data.length===0){
+    tambahan = '<p style="color:#888;font-size:13px;margin-top:8px">Tidak ada barang tambahan</p>';
+  } else {
+    tambahan = '<b style="font-size:13px">Barang tambahan ('+data.length+'):</b>' + data.map(x=>'<div style="display:flex;justify-content:space-between;align-items:center;background:#f8fafc;padding:8px;border-radius:8px;margin-top:6px;font-size:13px"><span><b>'+x.item_code+'</b> - '+(x.item_description||"")+'</span><span><b>Qty '+x.qty+'</b> <button onclick="ubahQtyItem('+x.id+',\''+code+'\','+x.qty+',-1)" style="border:1px solid #ddd;padding:2px 8px;border-radius:6px;cursor:pointer">-</button> <button onclick="ubahQtyItem('+x.id+',\''+code+'\','+x.qty+',1)" style="border:1px solid #ddd;padding:2px 8px;border-radius:6px;cursor:pointer">+</button> <button onclick="hapusRackItem('+x.id+',\''+code+'\')" style="color:red;border:0;background:none;cursor:pointer">✕</button></span></div>').join("");
+  }
+
+  box.innerHTML = head + utama + tambahan;
 }
 
 async function tambahItemKeRak(){
