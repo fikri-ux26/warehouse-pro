@@ -223,9 +223,10 @@ async function loadRackItems(code){
   let box = document.getElementById("rackItemsBox");
   if(!box) return;
   box.innerHTML = '<p style="color:#888;font-size:13px">Loading...</p>';
-  let {data:slot, error} = await supabaseClient.from("racks").select("*").eq("code",code).single();
-  if(error || !slot){ box.innerHTML = "Rak tidak ketemu: "+code; return; }
-  box.innerHTML = '<b style="font-size:14px">Isi '+code+':</b><div style="background:#dcfce7;border:1px solid #16a34a;padding:10px;border-radius:8px;margin-top:8px;font-size:13px"><b>BARANG:</b><br><b>'+(slot.item_code||"- TIDAK ADA ITEM -")+'</b><br>'+(slot.item_description||"")+ '<br>Qty: <b>'+(slot.jumlah_qty||0)+'</b> '+(slot.uom||"")+'<br>Kode Lama: '+(slot.item_code_lama||"-")+'<br>Status: '+(slot.rak_terisi?"TERISI":"KOSONG")+'</div>';
+  let {data} = await supabaseClient.from("rack_items").select("*").eq("code",code).order("id");
+  let head = '<div style="display:flex;justify-content:space-between;align-items:center"><b style="font-size:14px">Isi '+code+' ('+(data?data.length:0)+' jenis):</b><button onclick="tambahItemKeRak()" style="background:#16a34a;color:#fff;border:none;padding:6px 12px;border-radius:20px;cursor:pointer;font-weight:bold">+ Tambah</button></div>';
+  if(!data || data.length===0){ box.innerHTML = head + '<p style="color:#888;font-size:13px">Belum ada item di '+code+'</p>'; return; }
+  box.innerHTML = head + data.map(x=>'<div style="display:flex;justify-content:space-between;align-items:center;background:#f8fafc;padding:8px;border-radius:8px;margin-top:6px;font-size:13px"><span><b>'+x.item_code+'</b> - '+(x.item_description||"")+'</span><span><b>Qty '+x.qty+'</b> <button onclick="ubahQtyItem('+x.id+',\''+code+'\','+x.qty+',-1)" style="border:1px solid #ddd;padding:2px 8px;border-radius:6px;cursor:pointer">-</button> <button onclick="ubahQtyItem('+x.id+',\''+code+'\','+x.qty+',1)" style="border:1px solid #ddd;padding:2px 8px;border-radius:6px;cursor:pointer">+</button> <button onclick="hapusRackItem('+x.id+',\''+code+'\')" style="color:red;border:0;background:none;cursor:pointer">✕</button></span></div>').join("");
 }
 
 async function tambahItemKeRak(){
