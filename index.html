@@ -194,7 +194,7 @@ async function loadHistory(){
   let tb=document.getElementById("histBody"); if(!data||data.length===0){ tb.innerHTML=`<tr><td colspan="6" style="text-align:center;color:#888">Belum ada transaksi</td></tr>`; return; }
   tb.innerHTML=data.map(t=>`<tr><td>${new Date(t.created_at).toLocaleString("id-ID")}</td><td><span class="${t.type==="IN"?"badge-in":"badge-out"}">${t.type}</span></td><td><b>${t.code||""}</b> • ${t.rack||""}</td><td>${t.item_code||""}</td><td>${t.qty}</td><td>${t.username||""}</td></tr>`).join("");
 }
-  
+
 async function doIn(){
   async function loadRackItems(code){
   code = code || SELECTED_CODE || document.getElementById("fCode").value;
