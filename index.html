@@ -216,28 +216,22 @@ async function loadRackItems(code){
   let box = document.getElementById("rackItemsBox");
   if(!box) return;
   box.innerHTML = '<p style="color:#888;font-size:13px">Loading...</p>';
-
-  // 1. Ambil barang UTAMA dari tabel racks
   let {data:slot} = await supabaseClient.from("racks").select("*").eq("code",code).single();
-  // 2. Ambil barang TAMBAHAN dari tabel rack_items
   let {data} = await supabaseClient.from("rack_items").select("*").eq("code",code).order("id");
-
   let head = '<div style="display:flex;justify-content:space-between;align-items:center"><b style="font-size:14px">Isi '+code+':</b><button onclick="tambahItemKeRak()" style="background:#16a34a;color:#fff;border:none;padding:6px 12px;border-radius:20px;cursor:pointer;font-weight:bold">+ Tambah</button></div>';
-
   let utama = '';
-  if(slot && slot.rak_terisi){
+  // BENERIN DI SINI: kalau ada item_code ATAU qty > 0, tetep tampilin
+  if(slot && (slot.item_code || (slot.jumlah_qty||0) > 0)){
     utama = '<div style="background:#dcfce7;border:1px solid #16a34a;padding:10px;border-radius:8px;margin-top:8px;font-size:13px"><b>BARANG UTAMA:</b><br><b>'+(slot.item_code||"-")+'</b> - '+(slot.item_description||"")+'<br>Qty: <b>'+(slot.jumlah_qty||0)+'</b> '+(slot.uom||"")+' | Kode Lama: '+(slot.item_code_lama||"-")+'</div>';
   } else {
-    utama = '<div style="background:#f8fafc;padding:10px;border-radius:8px;margin-top:8px;font-size:13px">Rak ini <b>KOSONG</b> (barang utama belum ada)</div>';
+    utama = '<div style="background:#f8fafc;padding:10px;border-radius:8px;margin-top:8px;font-size:13px">Rak ini <b>KOSONG</b></div>';
   }
-
   let tambahan = '';
   if(!data || data.length===0){
     tambahan = '<p style="color:#888;font-size:13px;margin-top:8px">Tidak ada barang tambahan</p>';
   } else {
     tambahan = '<b style="font-size:13px">Barang tambahan ('+data.length+'):</b>' + data.map(x=>'<div style="display:flex;justify-content:space-between;align-items:center;background:#f8fafc;padding:8px;border-radius:8px;margin-top:6px;font-size:13px"><span><b>'+x.item_code+'</b> - '+(x.item_description||"")+'</span><span><b>Qty '+x.qty+'</b> <button onclick="ubahQtyItem('+x.id+',\''+code+'\','+x.qty+',-1)" style="border:1px solid #ddd;padding:2px 8px;border-radius:6px;cursor:pointer">-</button> <button onclick="ubahQtyItem('+x.id+',\''+code+'\','+x.qty+',1)" style="border:1px solid #ddd;padding:2px 8px;border-radius:6px;cursor:pointer">+</button> <button onclick="hapusRackItem('+x.id+',\''+code+'\')" style="color:red;border:0;background:none;cursor:pointer">✕</button></span></div>').join("");
   }
-
   box.innerHTML = head + utama + tambahan;
 }
 
@@ -336,11 +330,18 @@ function render(){
   document.getElementById("gridContainer").innerHTML=html||`<p style="text-align:center;color:#888">Tidak ada hasil</p>`;
   document.getElementById("footCount").textContent=`Total ${all.length} slot • Harusnya 3.004 • RAW MATERIAL 1.777 • SMALL RACK 42 • RAW MATERIAL (2) 1.185`;
 }
-function renderSearch(){
+async function renderSearch(){
   let el=document.getElementById("searchResult"); if(!GLOBAL_Q){ el.innerHTML=`<p style="color:#888">Ketik di search atas untuk cari...</p>`; return; }
-  let all=getAllSlots().filter(x=> x.code.toLowerCase().includes(GLOBAL_Q) || (x.item_code||"").toLowerCase().includes(GLOBAL_Q) || (x.item_description||"").toLowerCase().includes(GLOBAL_Q));
-  if(all.length===0){ el.innerHTML=`<p>Tidak ketemu "${GLOBAL_Q}" - Cek lagi kodenya, mungkin masih kode dummy A0001, belum kode asli A0111</p>`; return; }
-  el.innerHTML=`<p>Ditemukan ${all.length} hasil untuk "<b>${GLOBAL_Q}</b>"</p><table><thead><tr><th>Kode Rak</th><th>Area / Rack</th><th>Status</th><th>Item</th><th>Qty</th><th>Aksi</th></tr></thead><tbody>`+all.slice(0,50).map(x=>`<tr><td><b>${x.code}</b></td><td>${x.area} / ${x.rack}</td><td>${x.rak_terisi?"TERISI":"KOSONG"}</td><td>${x.item_code||"-"} ${x.item_description||""}</td><td>${x.jumlah_qty||0}</td><td><button onclick="selectSlot('${x.code}','${x.area}','${x.rack}')">Pilih</button></td></tr>`).join("")+`</tbody></table>`;
+  // Cari juga di rack_items
+  let {data:itemsTambahan} = await supabaseClient.from("rack_items").select("*").ilike("item_code","%"+GLOBAL_Q+"%");
+  let kodeDariTambahan = (itemsTambahan||[]).map(x=>x.code);
+  let all=getAllSlots().filter(x=> x.code.toLowerCase().includes(GLOBAL_Q) || (x.item_code||"").toLowerCase().includes(GLOBAL_Q) || (x.item_description||"").toLowerCase().includes(GLOBAL_Q) || kodeDariTambahan.includes(x.code));
+  if(all.length===0){ el.innerHTML=`<p>Tidak ketemu "${GLOBAL_Q}"</p>`; return; }
+  el.innerHTML=`<p>Ditemukan ${all.length} hasil untuk "<b>${GLOBAL_Q}</b>"</p><table><thead><tr><th>Kode Rak</th><th>Area / Rack</th><th>Status</th><th>Isi Rak</th><th>Qty Utama</th><th>Aksi</th></tr></thead><tbody>`+all.slice(0,50).map(x=>{
+    let extra = (itemsTambahan||[]).filter(y=>y.code===x.code).map(y=>y.item_code+" ("+y.qty+")").join(", ");
+    let isi = (x.item_code||"-") + (extra ? "<br><span style='color:#16a34a;font-size:11px'>+ "+extra+"</span>" : "");
+    return `<tr><td><b>${x.code}</b></td><td>${x.area} / ${x.rack}</td><td>${x.rak_terisi?"TERISI":"KOSONG"}</td><td>${isi}</td><td>${x.jumlah_qty||0}</td><td><button onclick="selectSlot('${x.code}','${x.area}','${x.rack}')">Pilih</button></td></tr>`;
+  }).join("")+`</tbody></table>`;
 }
 function doExport(){
   let h="Area,Rack,Kode Rak,Rak Kosong,Rak Terisi,Jumlah Qty,ITEM CODE,ITEM DESCRIPTION,UOM,ITEM CODE LAMA,Last Update,Updated By";
