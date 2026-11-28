@@ -196,6 +196,49 @@ async function loadHistory(){
 }
   
 async function doIn(){
+  async function loadRackItems(code){
+  code = code || SELECTED_CODE || document.getElementById("fCode").value;
+  if(!code) return;
+  SELECTED_CODE = code;
+  let box = document.getElementById("rackItemsBox");
+  if(!box) return;
+  box.innerHTML = '<p style="color:#888;font-size:13px">Loading...</p>';
+  let {data, error} = await supabaseClient.from("rack_items").select("*").eq("code",code).order("id");
+  if(error){ box.innerHTML = '<p style="color:red;font-size:13px">'+error.message+'</p>'; return; }
+  let head = '<div style="display:flex;justify-content:space-between;align-items:center"><b style="font-size:13px">Item di '+code+' ('+(data?data.length:0)+'):</b><button onclick="tambahItemKeRak()" style="background:#16a34a;color:#fff;border:none;padding:6px 12px;border-radius:20px;cursor:pointer;font-weight:bold">+ Tambah</button></div>';
+  if(!data || data.length===0){ box.innerHTML = head + '<p style="color:#888;font-size:13px">Belum ada item tambahan di '+code+'</p>'; return; }
+  box.innerHTML = head + data.map(x=>'<div style="display:flex;justify-content:space-between;align-items:center;background:#f8fafc;padding:8px;border-radius:8px;margin-top:6px;font-size:13px"><span><b>'+x.item_code+'</b> - '+(x.item_description||"")+'</span><span><b>Qty '+x.qty+'</b> <button onclick="ubahQtyItem('+x.id+',\''+code+'\','+x.qty+',-1)" style="border:1px solid #ddd;padding:2px 8px;border-radius:6px;cursor:pointer">-</button> <button onclick="ubahQtyItem('+x.id+',\''+code+'\','+x.qty+',1)" style="border:1px solid #ddd;padding:2px 8px;border-radius:6px;cursor:pointer">+</button> <button onclick="hapusRackItem('+x.id+',\''+code+'\')" style="color:red;border:0;background:none;cursor:pointer">✕</button></span></div>').join("");
+}
+
+async function tambahItemKeRak(){
+  let code = SELECTED_CODE || document.getElementById("fCode").value;
+  let itemCode = document.getElementById("fItem").value.trim().toUpperCase();
+  let qty = parseInt(document.getElementById("fQty").value||"0");
+  if(!code) return alert("Klik dulu raknya");
+  if(!itemCode) return alert("Isi Item Code dulu di form atas");
+  let {error} = await supabaseClient.from("rack_items").insert({code, item_code:itemCode, item_description:document.getElementById("fDesc").value, uom:document.getElementById("fUom").value, qty});
+  if(error) return alert(error.message);
+  await loadRackItems(code);
+  document.getElementById("msg").textContent = "Item "+itemCode+" ditambah ke "+code;
+}
+
+async function ubahQtyItem(id, code, qtyLama, tambah){
+  let qtyBaru = parseInt(qtyLama) + tambah;
+  if(qtyBaru < 0) return;
+  if(qtyBaru === 0){
+    if(!confirm('QTY jadi 0, hapus item ini?')) return;
+    await supabaseClient.from("rack_items").delete().eq("id",id);
+  } else {
+    await supabaseClient.from("rack_items").update({qty:qtyBaru}).eq("id",id);
+  }
+  await loadRackItems(code);
+}
+
+async function hapusRackItem(id, code){
+  if(!confirm("Hapus item ini dari rak?")) return;
+  await supabaseClient.from("rack_items").delete().eq("id",id);
+  await loadRackItems(code);
+}
   if(CURRENT_USER.role==="VIEWER") return alert("Viewer tidak bisa IN/OUT");
   let code=document.getElementById("fCode").value, qty=parseInt(document.getElementById("fQty").value||"0");
   let itemCode=document.getElementById("fItem").value.trim().toUpperCase();
@@ -208,47 +251,7 @@ async function doIn(){
   document.getElementById("msg").textContent="Berhasil IN "+qty+" ke "+code;
   loadAllData();
 }
-  async function loadRackItems(rackId){
-  const box = document.getElementById('rackItemsBox');
-  if(!box) return;
-  box.innerHTML = '<p style="color:#888;font-size:13px">Loading...</p>';
-  const { data, error } = await supabaseClient.from('rack_items').select('*').eq('rack_id', rackId).order('created_at');
-  if(error){ box.innerHTML = '<p style="color:red;font-size:13px">'+error.message+'</p>'; return; }
-  if(!data || data.length===0){ box.innerHTML = '<p style="color:#888;font-size:13px">Rak ini masih kosong</p>'; return; }
-box.innerHTML = '<div style="display:flex;justify-content:space-between;align-items:center"><b style="font-size:13px">Item di rak ini:</b><button onclick="tambahItemKeRak()" style="background:#16a34a;color:#fff;border:none;padding:4px 10px;border-radius:20px;cursor:pointer;font-weight:bold">+ Tambah</button></div>' + data.map(d=>
-  '<div style="display:flex;justify-content:space-between;align-items:center;border:1px solid #eee;padding:8px;border-radius:8px;margin-top:6px">'+
-  '<span>'+d.item_code+' - <b>QTY: '+d.qty+'</b></span>'+
-  '<span><button onclick="ubahQtyItem(\''+d.id+'\',\''+rackId+'\',\''+d.qty+'\',-1)" style="border:1px solid #ddd;padding:2px 8px;border-radius:6px;cursor:pointer">-</button> '+
-  '<button onclick="ubahQtyItem(\''+d.id+'\',\''+rackId+'\',\''+d.qty+'\',1)" style="border:1px solid #ddd;padding:2px 8px;border-radius:6px;cursor:pointer">+</button> '+
-  '<button onclick="hapusItemRak(\''+d.id+'\',\''+rackId+'\')" style="border:none;background:none;color:red;cursor:pointer">x</button></span>'+
-  '</div>').join('');}
 
-async function tambahItemKeRak(){
-  if(!selectedRack){ alert('Klik rak dulu'); return; }
-  const code = prompt('Kode Item (misal: BRG-001)');
-  if(!code) return;
-  const qty = parseInt(prompt('Qty mau ditambah berapa?', '1') || '1');
-  const { error } = await supabaseClient.from('rack_items').insert([{ rack_id: selectedRack, item_code: code, qty: qty }]);
-  if(error){ alert(error.message); return; }
-  loadRackItems(selectedRack);
-}
-  async function ubahQtyItem(id, rackId, qtyLama, tambah){
-  const qtyBaru = parseInt(qtyLama) + tambah;
-  if(qtyBaru < 0) return;
-  if(qtyBaru === 0){
-    if(!confirm('QTY jadi 0, hapus item ini?')) return;
-    await supabaseClient.from('rack_items').delete().eq('id', id);
-  } else {
-    await supabaseClient.from('rack_items').update({ qty: qtyBaru }).eq('id', id);
-  }
-  loadRackItems(rackId);
-}
-
-async function hapusItemRak(id, rackId){
-  if(!confirm('Hapus item ini?')) return;
-  await supabaseClient.from('rack_items').delete().eq('id', id);
-  loadRackItems(rackId);
-}
 async function doOut(){
   if(CURRENT_USER.role==="VIEWER") return alert("Viewer tidak bisa IN/OUT");
   document.getElementById("loadingOverlay").style.display = "flex";
@@ -288,30 +291,6 @@ async function selectSlot(code,area,rack){
   await loadRackItems(code);
 }
 
-async function loadRackItems(code){
-  let {data}=await supabaseClient.from("rack_items").select("*").eq("code",code).order("id");
-  let box=document.getElementById("rackItemsBox");
-  if(!box) return;
-  if(!data || data.length===0){ box.innerHTML=`<p style="color:#888;font-size:13px">Belum ada item tambahan di ${code}</p>`; return; }
-  box.innerHTML=`<b style="font-size:13px">Item di ${code} (${data.length}):</b><br>` + data.map(x=>`<div style="display:flex;justify-content:space-between;background:#f8fafc;padding:8px;border-radius:8px;margin-top:6px;font-size:13px"><span><b>${x.item_code}</b> - ${x.item_description||""} (${x.uom||""})</span><span><b>Qty ${x.qty}</b> <button onclick="hapusRackItem(${x.id},'${code}')" style="color:red;border:0;background:none;cursor:pointer">✕</button></span></div>`).join("");
-}
-
-async function tambahItemKeRak(){
-  let code=document.getElementById("fCode").value;
-  let itemCode=document.getElementById("fItem").value.trim().toUpperCase();
-  let qty=parseInt(document.getElementById("fQty").value||"0");
-  if(!code) return alert("Klik dulu raknya");
-  if(!itemCode) return alert("Isi Item Code dulu");
-  await supabaseClient.from("rack_items").insert({code, item_code:itemCode, item_description:document.getElementById("fDesc").value, uom:document.getElementById("fUom").value, qty});
-  await loadRackItems(code); loadAllData();
-  document.getElementById("msg").textContent="Item "+itemCode+" ditambah ke "+code;
-}
-
-async function hapusRackItem(id,code){
-  if(!confirm("Hapus item ini dari rak?")) return;
-  await supabaseClient.from("rack_items").delete().eq("id",id);
-  await loadRackItems(code); loadAllData();
-}
 function render(){
   let all=getAllSlots();
   document.getElementById("cTotalAll").textContent=all.length.toLocaleString("id-ID");
