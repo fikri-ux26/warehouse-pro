@@ -261,14 +261,29 @@ async function hapusRackItem(id, code){
 
 async function doOut(){
   if(CURRENT_USER.role==="VIEWER") return alert("Viewer tidak bisa IN/OUT");
-  document.getElementById("loadingOverlay").style.display = "flex";
   let code=document.getElementById("fCode").value, qty=parseInt(document.getElementById("fQty").value||"0");
-let {data:slot}=await supabaseClient.from("racks").select("*").eq("code",code).single(); if(!slot){ document.getElementById("loadingOverlay").style.display = "none"; return alert("Kode rak tidak ditemukan"); }  if((slot.jumlah_qty||0)<qty){ document.getElementById("loadingOverlay").style.display = "none"; return alert("Stok hanya "+slot.jumlah_qty); }
-  let nq=slot.jumlah_qty-qty;
-  await supabaseClient.from("racks").update({jumlah_qty:nq,rak_terisi:nq>0,rak_kosong:nq===0,item_code:nq===0?"":slot.item_code,item_description:nq===0?"":slot.item_description,uom:nq===0?"":slot.uom,item_code_lama:nq===0?"":slot.item_code_lama,last_update:new Date().toISOString(),updated_by:CURRENT_USER.username}).eq("code",code);
-  await supabaseClient.from("transactions").insert({area:slot.area,rack:slot.rack,code,item_code:slot.item_code,qty,type:"OUT",username:CURRENT_USER.username});
-  document.getElementById("msg").textContent="Berhasil OUT "+qty+" dari "+code;
-  document.getElementById("loadingOverlay").style.display = "none";
+  let itemCode=document.getElementById("fItem").value.trim().toUpperCase();
+  if(!code || !qty || !itemCode) return alert("Isi Kode Rak, Item Code & Qty dulu - biar ketauan barang mana yang dikeluarin");
+  let {data:slot}=await supabaseClient.from("racks").select("*").eq("code",code).single();
+  if(!slot) return alert("Kode rak tidak ditemukan");
+  // Cari barangnya di rack_items - PISAH per kode
+  let {data:item}=await supabaseClient.from("rack_items").select("*").eq("code",code).eq("item_code",itemCode).maybeSingle();
+  if(!item) return alert("Barang "+itemCode+" ga ada di "+code);
+  if((item.qty||0) < qty) return alert("Stok "+itemCode+" di "+code+" cuma "+item.qty);
+  let sisaItem = item.qty - qty;
+  if(sisaItem === 0){
+    await supabaseClient.from("rack_items").delete().eq("id",item.id);
+  } else {
+    await supabaseClient.from("rack_items").update({qty:sisaItem}).eq("id",item.id);
+  }
+  // Total rak = jumlah semua item yang masih ada di rak itu
+  let {data:allItems}=await supabaseClient.from("rack_items").select("qty").eq("code",code);
+  let total=(allItems||[]).reduce((s,x)=>s+(x.qty||0),0);
+  await supabaseClient.from("racks").update({jumlah_qty:total,rak_terisi:total>0,rak_kosong:total===0,last_update:new Date().toISOString(),updated_by:CURRENT_USER.username}).eq("code",code);
+  await supabaseClient.from("transactions").insert({area:slot.area,rack:slot.rack,code,item_code:itemCode,qty,type:"OUT",username:CURRENT_USER.username});
+  document.getElementById("msg").textContent="Berhasil OUT "+qty+" "+itemCode+" dari "+code;
+  loadAllData(); loadRackItems(code);
+}
 }
 function getAllSlots(){let a=[]; for(let x in RACK_DATA) for(let r in RACK_DATA[x]) RACK_DATA[x][r].forEach(v=>a.push(v)); return a;}
 function initDropdowns(){
